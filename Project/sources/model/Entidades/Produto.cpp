@@ -1,11 +1,5 @@
-//
-// Produto.cpp - Implementação de Produto
-//
-
-#include "../../headers/model/Entidades/Produto.h"
+#include "Produto.h"
 #include <stdexcept>
-
-using namespace std;
 
 int Produto::proximoId = 1;
 
@@ -25,16 +19,16 @@ Produto::Produto()
     : id(proximoId++), nome(""), categoria(""), preco(0.0), quantidadeStock(0), descricao("") {}
 
 Produto::Produto(const std::string& nome, const std::string& categoria,
-                  double preco, int quantidadeStock, const std::string& descricao)
+                 double preco, int quantidadeStock, const std::string& descricao)
     : id(proximoId++) {
     if (!ehNomeValido(nome)) {
-        throw invalid_argument("Nome do produto deve ter pelo menos 3 caracteres.");
+        throw std::invalid_argument("Nome do produto deve ter pelo menos 3 caracteres.");
     }
     if (!ehPrecoValido(preco)) {
-        throw invalid_argument("Preço deve ser maior que zero.");
+        throw std::invalid_argument("Preco deve ser maior que zero.");
     }
     if (!ehQuantidadeValida(quantidadeStock)) {
-        throw invalid_argument("Quantidade não pode ser negativa.");
+        throw std::invalid_argument("Quantidade nao pode ser negativa.");
     }
 
     this->nome = nome;
@@ -69,11 +63,10 @@ const std::string& Produto::getDescricao() const {
 }
 
 void Produto::setNome(const std::string& nome) {
-    if (ehNomeValido(nome)) {
-        this->nome = nome;
-    } else {
-        throw invalid_argument("Nome inválido.");
+    if (!ehNomeValido(nome)) {
+        throw std::invalid_argument("Nome invalido.");
     }
+    this->nome = nome;
 }
 
 void Produto::setCategoria(const std::string& categoria) {
@@ -81,11 +74,10 @@ void Produto::setCategoria(const std::string& categoria) {
 }
 
 void Produto::setPreco(double preco) {
-    if (ehPrecoValido(preco)) {
-        this->preco = preco;
-    } else {
-        throw invalid_argument("Preço inválido.");
+    if (!ehPrecoValido(preco)) {
+        throw std::invalid_argument("Preco invalido.");
     }
+    this->preco = preco;
 }
 
 void Produto::setDescricao(const std::string& descricao) {
@@ -93,36 +85,36 @@ void Produto::setDescricao(const std::string& descricao) {
 }
 
 bool Produto::verificarDisponibilidade(int quantidade) const {
-    return quantidadeStock >= quantidade;
+    return quantidade > 0 && quantidadeStock >= quantidade;
 }
 
 void Produto::atualizarStock(int quantidade) {
     int novaQuantidade = quantidadeStock + quantidade;
     if (novaQuantidade < 0) {
-        throw invalid_argument("Quantidade em stock não pode ser negativa.");
+        throw std::invalid_argument("Quantidade em stock nao pode ser negativa.");
     }
     quantidadeStock = novaQuantidade;
 }
 
 void Produto::adicionarStock(int quantidade) {
     if (quantidade <= 0) {
-        throw invalid_argument("Quantidade a adicionar deve ser positiva.");
+        throw std::invalid_argument("Quantidade a adicionar deve ser positiva.");
     }
     quantidadeStock += quantidade;
 }
 
 void Produto::removerStock(int quantidade) {
     if (quantidade <= 0) {
-        throw invalid_argument("Quantidade a remover deve ser positiva.");
+        throw std::invalid_argument("Quantidade a remover deve ser positiva.");
     }
     if (quantidadeStock < quantidade) {
-        throw invalid_argument("Stock insuficiente para remover.");
+        throw std::invalid_argument("Stock insuficiente para remover.");
     }
     quantidadeStock -= quantidade;
 }
 
 bool Produto::operator==(const Produto& outro) const {
-    return this->id == outro.id;
+    return id == outro.id;
 }
 
 bool Produto::operator==(int id) const {

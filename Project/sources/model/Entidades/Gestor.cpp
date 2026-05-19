@@ -1,15 +1,25 @@
-//
-// Gestor.cpp - Implementação de Gestor
-//
-
-#include "../../headers/model/Entidades/Gestor.h"
-
-using namespace std;
+#include "Gestor.h"
 
 Gestor::Gestor() : Funcionario() {
-    this->cargo = "Gestor";
+    cargo = "Gestor";
 }
 
 Gestor::Gestor(const std::string& nome, const std::string& username,
                const std::string& password)
     : Funcionario(nome, username, password, "Gestor") {}
+
+bool Gestor::podeGerirStock() const {
+    return true;
+}
+
+bool Gestor::podeGerirFuncionarios() const {
+    return true;
+}
+
+bool Gestor::podeConsultarRelatorios() const {
+    return true;
+}
+
+bool Gestor::podeGerirProdutos() const {
+    return true;
+}

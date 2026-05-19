@@ -1,8 +1,3 @@
-//
-// Gestor.h - Funcionário com permissões administrativas
-// Criado para o Sistema de Gestão de Farmácia
-//
-
 #ifndef PROJECT_HEADERS_MODEL_ENTIDADES_GESTOR_H_
 #define PROJECT_HEADERS_MODEL_ENTIDADES_GESTOR_H_
 
@@ -14,13 +9,10 @@ public:
     Gestor(const std::string& nome, const std::string& username,
            const std::string& password);
 
-    // Permissões específicas do Gestor
-    bool podeGerirStock() const { return true; }
-    bool podeGerirFuncionarios() const { return true; }
-    bool podeConsultarRelatorios() const { return true; }
-    bool podeGerirProdutos() const { return true; }
-
-    virtual ~Gestor() = default;
+    bool podeGerirStock() const;
+    bool podeGerirFuncionarios() const;
+    bool podeConsultarRelatorios() const;
+    bool podeGerirProdutos() const;
 };
 
 #endif // PROJECT_HEADERS_MODEL_ENTIDADES_GESTOR_H_

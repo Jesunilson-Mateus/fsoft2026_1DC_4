@@ -1,11 +1,5 @@
-//
-// Funcionario.cpp - Implementação de Funcionario
-//
-
-#include "../../headers/model/Entidades/Funcionario.h"
+#include "Funcionario.h"
 #include <stdexcept>
-
-using namespace std;
 
 int Funcionario::proximoId = 1000;
 
@@ -17,26 +11,25 @@ bool Funcionario::ehUsernameValido(const std::string& username) {
     return username.length() >= 3 && username.length() <= 20;
 }
 
-Funcionario::Funcionario() 
-    : id(++proximoId), nome(""), username(""), password(""), cargo("Funcionário") {}
+Funcionario::Funcionario()
+    : id(++proximoId), nome(""), username(""), password(""), cargo("Funcionario") {}
 
 Funcionario::Funcionario(const std::string& nome, const std::string& username,
                          const std::string& password, const std::string& cargo)
-    : id(++proximoId) {
+    : id(++proximoId), cargo(cargo) {
     if (!ehNomeValido(nome)) {
-        throw invalid_argument("Nome deve ter pelo menos 3 caracteres.");
+        throw std::invalid_argument("Nome deve ter pelo menos 3 caracteres.");
     }
     if (!ehUsernameValido(username)) {
-        throw invalid_argument("Username deve ter entre 3 e 20 caracteres.");
+        throw std::invalid_argument("Username deve ter entre 3 e 20 caracteres.");
     }
     if (password.empty()) {
-        throw invalid_argument("Password não pode estar vazia.");
+        throw std::invalid_argument("Password nao pode estar vazia.");
     }
 
     this->nome = nome;
     this->username = username;
     this->password = password;
-    this->cargo = cargo;
 }
 
 int Funcionario::getId() const {
@@ -60,27 +53,25 @@ const std::string& Funcionario::getCargo() const {
 }
 
 void Funcionario::setNome(const std::string& nome) {
-    if (ehNomeValido(nome)) {
-        this->nome = nome;
-    } else {
-        throw invalid_argument("Nome inválido.");
+    if (!ehNomeValido(nome)) {
+        throw std::invalid_argument("Nome invalido.");
     }
+    this->nome = nome;
 }
 
 void Funcionario::setPassword(const std::string& password) {
-    if (!password.empty()) {
-        this->password = password;
-    } else {
-        throw invalid_argument("Password não pode estar vazia.");
+    if (password.empty()) {
+        throw std::invalid_argument("Password nao pode estar vazia.");
     }
+    this->password = password;
 }
 
 bool Funcionario::autenticar(const std::string& username, const std::string& password) const {
-    return (this->username == username && this->password == password);
+    return this->username == username && this->password == password;
 }
 
 bool Funcionario::operator==(const Funcionario& outro) const {
-    return this->id == outro.id;
+    return id == outro.id;
 }
 
 bool Funcionario::operator==(int id) const {

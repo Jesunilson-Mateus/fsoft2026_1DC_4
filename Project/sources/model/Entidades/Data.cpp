@@ -1,60 +1,36 @@
-//
-// Data.cpp - Implementação de Data
-//
-
-#include "../../headers/model/Entidades/Data.h"
+#include "Data.h"
 #include <stdexcept>
 #include <string>
 
-using namespace std;
-
-bool Data::ehAnoBissexto(const int ano) {
+bool Data::ehAnoBissexto(int ano) {
     if (ano % 400 == 0) return true;
     if (ano % 100 == 0) return false;
-    if (ano % 4 == 0) return true;
-    return false;
+    return ano % 4 == 0;
 }
 
-bool Data::ehValida(const int dia, const int mes, const int ano) {
-    if (dia <= 0 || dia > 31 || mes <= 0 || mes > 12) {
-        return false;
-    }
+bool Data::ehValida(int dia, int mes, int ano) {
+    if (ano < 1900 || dia < 1 || mes < 1 || mes > 12) return false;
 
-    switch (mes) {
-        case 2:
-            if (ehAnoBissexto(ano)) {
-                return dia <= 29;
-            } else {
-                return dia <= 28;
-            }
-        case 4:
-        case 6:
-        case 9:
-        case 11:
-            return dia <= 30;
-        default:
-            return true;
-    }
+    int diasNoMes[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (mes == 2 && ehAnoBissexto(ano)) return dia <= 29;
+    return dia <= diasNoMes[mes - 1];
 }
 
 Data::Data() : dia(1), mes(1), ano(1900) {}
 
-Data::Data(const int dia, const int mes, const int ano) {
+Data::Data(int dia, int mes, int ano) {
     definirData(dia, mes, ano);
 }
 
-Data::Data(const Data& data) {
-    definirData(data.dia, data.mes, data.ano);
-}
-
-void Data::definirData(const int dia, const int mes, const int ano) {
-    if (ehValida(dia, mes, ano)) {
-        this->dia = dia;
-        this->mes = mes;
-        this->ano = ano;
-    } else {
-        throw invalid_argument("Data inválida: " + to_string(dia) + "/" + to_string(mes) + "/" + to_string(ano));
+void Data::definirData(int dia, int mes, int ano) {
+    if (!ehValida(dia, mes, ano)) {
+        throw std::invalid_argument("Data invalida: " + std::to_string(dia) + "/" +
+                                    std::to_string(mes) + "/" + std::to_string(ano));
     }
+
+    this->dia = dia;
+    this->mes = mes;
+    this->ano = ano;
 }
 
 void Data::obterData(int& dia, int& mes, int& ano) const {
@@ -64,18 +40,16 @@ void Data::obterData(int& dia, int& mes, int& ano) const {
 }
 
 bool Data::operator==(const Data& outra) const {
-    return (this->dia == outra.dia && this->mes == outra.mes && this->ano == outra.ano);
+    return dia == outra.dia && mes == outra.mes && ano == outra.ano;
 }
 
 bool Data::operator>(const Data& outra) const {
-    if (this->ano > outra.ano) return true;
-    if (this->ano == outra.ano && this->mes > outra.mes) return true;
-    if (this->ano == outra.ano && this->mes == outra.mes && this->dia > outra.dia) return true;
-    return false;
+    if (ano != outra.ano) return ano > outra.ano;
+    if (mes != outra.mes) return mes > outra.mes;
+    return dia > outra.dia;
 }
 
 bool Data::operator<(const Data& outra) const {
-    if (*this == outra) return false;
-    if (*this > outra) return false;
-    return true;
+    return !(*this == outra) && !(*this > outra);
 }
+

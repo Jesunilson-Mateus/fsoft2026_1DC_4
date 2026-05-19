@@ -1,21 +1,18 @@
-//
-// Venda.cpp - Implementação de Venda
-//
-
-#include "../../headers/model/Entidades/Venda.h"
+#include "Venda.h"
 #include <stdexcept>
-
-using namespace std;
 
 int Venda::proximoId = 10000;
 
-Venda::Venda()
-    : idVenda(++proximoId), dataVenda(), funcionario(nullptr), total(0.0), receita(nullptr) {}
+ItemVenda::ItemVenda(Produto* produto, int quantidade, double precoUnitario)
+    : produto(produto), quantidade(quantidade), precoUnitario(precoUnitario),
+      subtotal(quantidade * precoUnitario) {}
+
+Venda::Venda() : idVenda(++proximoId), dataVenda(), funcionario(nullptr), total(0.0), receita(nullptr) {}
 
 Venda::Venda(const Data& dataVenda, Funcionario* funcionario)
     : idVenda(++proximoId), dataVenda(dataVenda), funcionario(funcionario), total(0.0), receita(nullptr) {
     if (funcionario == nullptr) {
-        throw invalid_argument("Funcionário não pode ser nulo.");
+        throw std::invalid_argument("Funcionario nao pode ser nulo.");
     }
 }
 
@@ -45,17 +42,13 @@ Receita* Venda::getReceita() const {
 
 void Venda::adicionarItem(Produto* produto, int quantidade) {
     if (produto == nullptr) {
-        throw invalid_argument("Produto não pode ser nulo.");
-    }
-    if (quantidade <= 0) {
-        throw invalid_argument("Quantidade deve ser maior que zero.");
+        throw std::invalid_argument("Produto nao pode ser nulo.");
     }
     if (!produto->verificarDisponibilidade(quantidade)) {
-        throw invalid_argument("Stock insuficiente para este produto.");
+        throw std::invalid_argument("Stock insuficiente para este produto.");
     }
 
-    ItemVenda item(produto, quantidade, produto->getPreco());
-    itens.push_back(item);
+    itens.push_back(ItemVenda(produto, quantidade, produto->getPreco()));
 }
 
 void Venda::definirReceita(Receita* receita) {
@@ -69,16 +62,11 @@ void Venda::calcularTotal() {
     }
 }
 
-double Venda::obterSubtotal() const {
-    return total;
-}
-
 bool Venda::processarVenda() {
     if (itens.empty()) {
-        throw invalid_argument("Venda não pode estar vazia.");
+        throw std::invalid_argument("Venda nao pode estar vazia.");
     }
 
-    // Atualizar stock de cada produto
     for (const auto& item : itens) {
         item.produto->atualizarStock(-item.quantidade);
     }
@@ -88,13 +76,9 @@ bool Venda::processarVenda() {
 }
 
 bool Venda::operator==(const Venda& outra) const {
-    return this->idVenda == outra.idVenda;
+    return idVenda == outra.idVenda;
 }
 
 bool Venda::operator==(int id) const {
-    return this->idVenda == id;
-}
-
-Venda::~Venda() {
-    // Não deletar ponteiros, pois são gerenciados pelas classes de gestão
+    return idVenda == id;
 }
