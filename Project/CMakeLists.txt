@@ -1,5 +1,8 @@
 set(PROJECT_HEADERS
+    Mock/MockData.h
     headers/controllers/Controller.h
+    headers/repo/IPharmacyRepository.h
+    headers/repo/PharmacyRepositoryMemory.h
     headers/model/Entidades/Data.h
     headers/model/Entidades/Funcionario.h
     headers/model/Entidades/Gestor.h
@@ -10,7 +13,9 @@ set(PROJECT_HEADERS
 )
 
 set(PROJECT_SOURCES
+    Mock/MockData.cpp
     sources/Controller/Controllers.cpp
+    sources/repo/PharmacyRepositoryMemory.cpp
     sources/model/Entidades/Data.cpp
     sources/model/Entidades/Funcionario.cpp
     sources/model/Entidades/Gestor.cpp
@@ -24,6 +29,7 @@ add_library(PharmacyCore ${PROJECT_HEADERS} ${PROJECT_SOURCES})
 
 target_include_directories(PharmacyCore PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/headers
+    ${CMAKE_CURRENT_SOURCE_DIR}/headers/repo
     ${CMAKE_CURRENT_SOURCE_DIR}/headers/model/Entidades
 )
 

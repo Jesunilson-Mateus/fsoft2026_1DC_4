@@ -7,4 +7,8 @@ enable_testing()
 
 # Add subdirectories for the main project and the tester
 add_subdirectory(Project)
+
+add_executable(PharmacyManagementSystemApp main.cpp)
+target_link_libraries(PharmacyManagementSystemApp PRIVATE PharmacyCore)
+
 add_subdirectory(ProjectTester)
