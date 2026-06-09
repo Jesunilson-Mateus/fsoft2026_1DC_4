@@ -5,8 +5,6 @@
 
 class Produto {
 protected:
-    static int proximoId;
-    int id{};
     std::string nome;
     std::string categoria;
     double preco{};
@@ -23,7 +21,6 @@ public:
             double preco, int quantidadeStock, const std::string& descricao = "");
     virtual ~Produto() = default;
 
-    int getId() const;
     const std::string& getNome() const;
     const std::string& getCategoria() const;
     double getPreco() const;
@@ -41,7 +38,6 @@ public:
     void removerStock(int quantidade);
 
     bool operator==(const Produto& outro) const;
-    bool operator==(int id) const;
 };
 
 #endif // PROJECT_HEADERS_MODEL_ENTIDADES_PRODUTO_H_

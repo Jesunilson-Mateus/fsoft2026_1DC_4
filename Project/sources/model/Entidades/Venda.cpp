@@ -1,23 +1,17 @@
 #include "Venda.h"
 #include <stdexcept>
 
-int Venda::proximoId = 10000;
-
 ItemVenda::ItemVenda(Produto* produto, int quantidade, double precoUnitario)
-    : produto(produto), quantidade(quantidade), precoUnitario(precoUnitario),
-      subtotal(quantidade * precoUnitario) {}
+        : produto(produto), quantidade(quantidade), precoUnitario(precoUnitario),
+          subtotal(quantidade * precoUnitario) {}
 
-Venda::Venda() : idVenda(++proximoId), dataVenda(), funcionario(nullptr), total(0.0), receita(nullptr) {}
+Venda::Venda() : dataVenda(), funcionario(nullptr), total(0.0), receita(nullptr) {}
 
 Venda::Venda(const Data& dataVenda, Funcionario* funcionario)
-    : idVenda(++proximoId), dataVenda(dataVenda), funcionario(funcionario), total(0.0), receita(nullptr) {
+        : dataVenda(dataVenda), funcionario(funcionario), total(0.0), receita(nullptr) {
     if (funcionario == nullptr) {
         throw std::invalid_argument("Funcionario nao pode ser nulo.");
     }
-}
-
-int Venda::getId() const {
-    return idVenda;
 }
 
 const Data& Venda::getDataVenda() const {
@@ -76,9 +70,5 @@ bool Venda::processarVenda() {
 }
 
 bool Venda::operator==(const Venda& outra) const {
-    return idVenda == outra.idVenda;
-}
-
-bool Venda::operator==(int id) const {
-    return idVenda == id;
+    return funcionario == outra.funcionario && dataVenda == outra.dataVenda && total == outra.total;
 }
