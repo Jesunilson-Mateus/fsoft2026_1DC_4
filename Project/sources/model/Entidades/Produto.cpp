@@ -1,8 +1,6 @@
 #include "Produto.h"
 #include <stdexcept>
 
-int Produto::proximoId = 1;
-
 bool Produto::ehNomeValido(const std::string& nome) {
     return nome.length() >= 3;
 }
@@ -16,11 +14,11 @@ bool Produto::ehQuantidadeValida(int quantidade) {
 }
 
 Produto::Produto()
-    : id(proximoId++), nome(""), categoria(""), preco(0.0), quantidadeStock(0), descricao("") {}
+        : nome(""), categoria(""), preco(0.0), quantidadeStock(0), descricao("") {}
 
 Produto::Produto(const std::string& nome, const std::string& categoria,
                  double preco, int quantidadeStock, const std::string& descricao)
-    : id(proximoId++) {
+{
     if (!ehNomeValido(nome)) {
         throw std::invalid_argument("Nome do produto deve ter pelo menos 3 caracteres.");
     }
@@ -36,10 +34,6 @@ Produto::Produto(const std::string& nome, const std::string& categoria,
     this->preco = preco;
     this->quantidadeStock = quantidadeStock;
     this->descricao = descricao;
-}
-
-int Produto::getId() const {
-    return id;
 }
 
 const std::string& Produto::getNome() const {
@@ -114,9 +108,5 @@ void Produto::removerStock(int quantidade) {
 }
 
 bool Produto::operator==(const Produto& outro) const {
-    return id == outro.id;
-}
-
-bool Produto::operator==(int id) const {
-    return this->id == id;
+    return nome == outro.nome && categoria == outro.categoria;
 }

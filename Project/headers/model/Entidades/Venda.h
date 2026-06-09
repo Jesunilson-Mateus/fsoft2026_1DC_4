@@ -18,8 +18,6 @@ struct ItemVenda {
 
 class Venda {
 private:
-    static int proximoId;
-    int idVenda{};
     Data dataVenda;
     Funcionario* funcionario{};
     std::vector<ItemVenda> itens;
@@ -30,7 +28,6 @@ public:
     Venda();
     Venda(const Data& dataVenda, Funcionario* funcionario);
 
-    int getId() const;
     const Data& getDataVenda() const;
     Funcionario* getFuncionario() const;
     const std::vector<ItemVenda>& getItens() const;
@@ -43,7 +40,6 @@ public:
     bool processarVenda();
 
     bool operator==(const Venda& outra) const;
-    bool operator==(int id) const;
 };
 
 #endif // PROJECT_HEADERS_MODEL_ENTIDADES_VENDA_H_
