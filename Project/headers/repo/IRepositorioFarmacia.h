@@ -1,5 +1,5 @@
-#ifndef FSOFT2026_1DC_4_IPHARMACYREPOSITORY_H
-#define FSOFT2026_1DC_4_IPHARMACYREPOSITORY_H
+#ifndef FSOFT2026_1DC_4_IREPOSITORIOFARMACIA_H
+#define FSOFT2026_1DC_4_IREPOSITORIOFARMACIA_H
 
 #include "../model/Entidades/Funcionario.h"
 #include "../model/Entidades/Produto.h"
@@ -8,13 +8,13 @@
 #include <memory>
 #include <vector>
 
-class IPharmacyRepository {
+class IRepositorioFarmacia {
 public:
     virtual std::vector<std::unique_ptr<Produto>>& getProdutos() = 0;
     virtual std::vector<std::unique_ptr<Funcionario>>& getFuncionarios() = 0;
     virtual std::vector<std::unique_ptr<Receita>>& getReceitas() = 0;
     virtual std::vector<std::unique_ptr<Venda>>& getVendas() = 0;
-    virtual ~IPharmacyRepository() = default;
+    virtual ~IRepositorioFarmacia() = default;
 };
 
-#endif //FSOFT2026_1DC_4_IPHARMACYREPOSITORY_H
+#endif //FSOFT2026_1DC_4_IREPOSITORIOFARMACIA_H

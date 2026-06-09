@@ -1,8 +1,8 @@
 set(PROJECT_HEADERS
     Mock/MockData.h
     headers/controllers/Controller.h
-    headers/repo/IPharmacyRepository.h
-    headers/repo/PharmacyRepositoryMemory.h
+    headers/repo/IRepositorioFarmacia.h
+    headers/repo/RepositorioFarmaciaMemoria.h
     headers/model/Entidades/Data.h
     headers/model/Entidades/Funcionario.h
     headers/model/Entidades/Gestor.h
@@ -15,7 +15,7 @@ set(PROJECT_HEADERS
 set(PROJECT_SOURCES
     Mock/MockData.cpp
     sources/Controller/Controllers.cpp
-    sources/repo/PharmacyRepositoryMemory.cpp
+    sources/repo/RepositorioFarmaciaMemoria.cpp
     sources/model/Entidades/Data.cpp
     sources/model/Entidades/Funcionario.cpp
     sources/model/Entidades/Gestor.cpp

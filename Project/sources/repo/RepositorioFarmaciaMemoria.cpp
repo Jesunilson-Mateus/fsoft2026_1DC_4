@@ -1,23 +1,23 @@
-#include "../../headers/repo/PharmacyRepositoryMemory.h"
+#include "../../headers/repo/RepositorioFarmaciaMemoria.h"
 #include <fstream>
 
-std::vector<std::unique_ptr<Produto>>& PharmacyRepositoryMemory::getProdutos() {
+std::vector<std::unique_ptr<Produto>>& RepositorioFarmaciaMemoria::getProdutos() {
     return produtos;
 }
 
-std::vector<std::unique_ptr<Funcionario>>& PharmacyRepositoryMemory::getFuncionarios() {
+std::vector<std::unique_ptr<Funcionario>>& RepositorioFarmaciaMemoria::getFuncionarios() {
     return funcionarios;
 }
 
-std::vector<std::unique_ptr<Receita>>& PharmacyRepositoryMemory::getReceitas() {
+std::vector<std::unique_ptr<Receita>>& RepositorioFarmaciaMemoria::getReceitas() {
     return receitas;
 }
 
-std::vector<std::unique_ptr<Venda>>& PharmacyRepositoryMemory::getVendas() {
+std::vector<std::unique_ptr<Venda>>& RepositorioFarmaciaMemoria::getVendas() {
     return vendas;
 }
 
-void PharmacyRepositoryMemory::carregarStockGuardado(const std::string& caminhoFicheiro) {
+void RepositorioFarmaciaMemoria::carregarStockGuardado(const std::string& caminhoFicheiro) {
     std::ifstream ficheiro(caminhoFicheiro);
     if (!ficheiro) {
         return;
@@ -33,7 +33,7 @@ void PharmacyRepositoryMemory::carregarStockGuardado(const std::string& caminhoF
     }
 }
 
-void PharmacyRepositoryMemory::guardarStock(const std::string& caminhoFicheiro) const {
+void RepositorioFarmaciaMemoria::guardarStock(const std::string& caminhoFicheiro) const {
     std::ofstream ficheiro(caminhoFicheiro);
     if (!ficheiro) {
         return;

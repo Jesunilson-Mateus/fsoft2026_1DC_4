@@ -1,11 +1,11 @@
 #include "../Project/headers/controllers/Controller.h"
-#include "../Project/headers/repo/PharmacyRepositoryMemory.h"
+#include "../Project/headers/repo/RepositorioFarmaciaMemoria.h"
 #include <cassert>
 #include <stdexcept>
 
 int main() {
-    PharmacyRepositoryMemory repository;
-    Controller controller(&repository);
+    RepositorioFarmaciaMemoria repositorio;
+    Controller controller(&repositorio);
 
     Gestor& gestor = controller.adicionarGestor("Maria Gestora", "gestora", "1234");
     Funcionario& funcionario = controller.adicionarFuncionario("Joao Silva", "joao", "abcd");

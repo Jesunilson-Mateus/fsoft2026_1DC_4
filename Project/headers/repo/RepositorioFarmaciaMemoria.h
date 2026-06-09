@@ -1,10 +1,10 @@
-#ifndef FSOFT2026_1DC_4_PHARMACYREPOSITORYMEMORY_H
-#define FSOFT2026_1DC_4_PHARMACYREPOSITORYMEMORY_H
+#ifndef FSOFT2026_1DC_4_REPOSITORIOFARMACIAMEMORIA_H
+#define FSOFT2026_1DC_4_REPOSITORIOFARMACIAMEMORIA_H
 
-#include "IPharmacyRepository.h"
+#include "IRepositorioFarmacia.h"
 #include <string>
 
-class PharmacyRepositoryMemory : public IPharmacyRepository {
+class RepositorioFarmaciaMemoria : public IRepositorioFarmacia {
 private:
     std::vector<std::unique_ptr<Produto>> produtos;
     std::vector<std::unique_ptr<Funcionario>> funcionarios;
@@ -21,4 +21,4 @@ public:
     void guardarStock(const std::string& caminhoFicheiro) const;
 };
 
-#endif //FSOFT2026_1DC_4_PHARMACYREPOSITORYMEMORY_H
+#endif //FSOFT2026_1DC_4_REPOSITORIOFARMACIAMEMORIA_H

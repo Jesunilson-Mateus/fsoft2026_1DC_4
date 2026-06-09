@@ -7,7 +7,7 @@
 #include "../model/Entidades/Produto.h"
 #include "../model/Entidades/Receita.h"
 #include "../model/Entidades/Venda.h"
-#include "../repo/IPharmacyRepository.h"
+#include "../repo/IRepositorioFarmacia.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -21,7 +21,7 @@ struct RelatorioResumo {
 
 class Controller {
 private:
-    IPharmacyRepository* repository{};
+    IRepositorioFarmacia* repositorio{};
     Funcionario* utilizadorAutenticado{};
 
     Produto* obterProdutoPorPosicaoInterna(int posicao) const;
@@ -31,7 +31,7 @@ private:
     void exigirGestor() const;
 
 public:
-    explicit Controller(IPharmacyRepository* repository);
+    explicit Controller(IRepositorioFarmacia* repositorio);
 
     Funcionario* autenticar(const std::string& username, const std::string& password);
     void terminarSessao();

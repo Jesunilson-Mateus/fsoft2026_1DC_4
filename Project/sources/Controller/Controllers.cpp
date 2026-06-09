@@ -1,14 +1,14 @@
 #include "../../headers/controllers/Controller.h"
 #include <stdexcept>
 
-Controller::Controller(IPharmacyRepository* repository) : repository(repository) {
-    if (repository == nullptr) {
+Controller::Controller(IRepositorioFarmacia* repositorio) : repositorio(repositorio) {
+    if (repositorio == nullptr) {
         throw std::invalid_argument("Repositorio nao pode ser nulo.");
     }
 }
 
 Produto* Controller::obterProdutoPorPosicaoInterna(int posicao) const {
-    auto& produtos = repository->getProdutos();
+    auto& produtos = repositorio->getProdutos();
     if (posicao < 1 || posicao > static_cast<int>(produtos.size())) {
         return nullptr;
     }
@@ -16,7 +16,7 @@ Produto* Controller::obterProdutoPorPosicaoInterna(int posicao) const {
 }
 
 Receita* Controller::procurarReceitaPorCodigoInterna(int codigo) const {
-    auto& receitas = repository->getReceitas();
+    auto& receitas = repositorio->getReceitas();
     for (const auto& receita : receitas) {
         if (receita->getCodigoReceita() == codigo) {
             return receita.get();
@@ -50,7 +50,7 @@ void Controller::exigirGestor() const {
 }
 
 Funcionario* Controller::autenticar(const std::string& username, const std::string& password) {
-    auto& funcionarios = repository->getFuncionarios();
+    auto& funcionarios = repositorio->getFuncionarios();
     for (const auto& funcionario : funcionarios) {
         if (funcionario->autenticar(username, password)) {
             utilizadorAutenticado = funcionario.get();
@@ -77,7 +77,7 @@ bool Controller::utilizadorEhGestor() const {
 Produto& Controller::adicionarProduto(const std::string& nome, const std::string& categoria,
                                       double preco, int quantidadeStock,
                                       const std::string& descricao) {
-    auto& produtos = repository->getProdutos();
+    auto& produtos = repositorio->getProdutos();
     produtos.push_back(std::unique_ptr<Produto>(
         new Produto(nome, categoria, preco, quantidadeStock, descricao)));
     return *produtos.back();
@@ -89,7 +89,7 @@ Medicamento& Controller::adicionarMedicamento(const std::string& nome, const std
                                               const std::string& fabricante,
                                               const Data& dataValidade,
                                               const std::string& descricao) {
-    auto& produtos = repository->getProdutos();
+    auto& produtos = repositorio->getProdutos();
     produtos.push_back(std::unique_ptr<Produto>(
         new Medicamento(nome, categoria, preco, quantidadeStock, requerReceita,
                         dosagem, fabricante, dataValidade, descricao)));
@@ -99,7 +99,7 @@ Medicamento& Controller::adicionarMedicamento(const std::string& nome, const std
 Funcionario& Controller::adicionarFuncionario(const std::string& nome,
                                               const std::string& username,
                                               const std::string& password) {
-    auto& funcionarios = repository->getFuncionarios();
+    auto& funcionarios = repositorio->getFuncionarios();
     funcionarios.push_back(std::unique_ptr<Funcionario>(
         new Funcionario(nome, username, password, "Funcionario")));
     return *funcionarios.back();
@@ -108,7 +108,7 @@ Funcionario& Controller::adicionarFuncionario(const std::string& nome,
 Gestor& Controller::adicionarGestor(const std::string& nome,
                                     const std::string& username,
                                     const std::string& password) {
-    auto& funcionarios = repository->getFuncionarios();
+    auto& funcionarios = repositorio->getFuncionarios();
     funcionarios.push_back(std::unique_ptr<Funcionario>(
         new Gestor(nome, username, password)));
     return static_cast<Gestor&>(*funcionarios.back());
@@ -118,7 +118,7 @@ Receita& Controller::adicionarReceita(const std::string& nomePaciente,
                                       const std::string& medicamento,
                                       int codigoReceita,
                                       const std::string& medico) {
-    auto& receitas = repository->getReceitas();
+    auto& receitas = repositorio->getReceitas();
     receitas.push_back(std::unique_ptr<Receita>(
         new Receita(nomePaciente, medicamento, codigoReceita, medico)));
     return *receitas.back();
@@ -129,19 +129,19 @@ Produto* Controller::obterProdutoPorPosicao(int posicao) const {
 }
 
 const std::vector<std::unique_ptr<Produto>>& Controller::listarProdutos() const {
-    return repository->getProdutos();
+    return repositorio->getProdutos();
 }
 
 const std::vector<std::unique_ptr<Funcionario>>& Controller::listarFuncionarios() const {
-    return repository->getFuncionarios();
+    return repositorio->getFuncionarios();
 }
 
 const std::vector<std::unique_ptr<Receita>>& Controller::listarReceitas() const {
-    return repository->getReceitas();
+    return repositorio->getReceitas();
 }
 
 const std::vector<std::unique_ptr<Venda>>& Controller::listarVendas() const {
-    return repository->getVendas();
+    return repositorio->getVendas();
 }
 
 int Controller::consultarStock(int posicaoProduto) const {
@@ -221,7 +221,7 @@ Venda& Controller::registarVenda(const std::vector<std::pair<int, int>>& itens,
         receita->marcarComoUtilizada();
     }
 
-    auto& vendas = repository->getVendas();
+    auto& vendas = repositorio->getVendas();
     vendas.push_back(std::move(venda));
     return *vendas.back();
 }
@@ -229,8 +229,8 @@ Venda& Controller::registarVenda(const std::vector<std::pair<int, int>>& itens,
 RelatorioResumo Controller::gerarRelatorioResumo() const {
     exigirGestor();
     RelatorioResumo resumo;
-    auto& produtos = repository->getProdutos();
-    auto& vendas = repository->getVendas();
+    auto& produtos = repositorio->getProdutos();
+    auto& vendas = repositorio->getVendas();
     resumo.totalProdutos = static_cast<int>(produtos.size());
     resumo.totalVendas = static_cast<int>(vendas.size());
 

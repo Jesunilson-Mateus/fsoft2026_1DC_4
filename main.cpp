@@ -1,5 +1,5 @@
 #include "Project/headers/controllers/Controller.h"
-#include "Project/headers/repo/PharmacyRepositoryMemory.h"
+#include "Project/headers/repo/RepositorioFarmaciaMemoria.h"
 #include "Project/Mock/MockData.h"
 #include <iomanip>
 #include <iostream>
@@ -201,7 +201,7 @@ void iniciarSessao(Controller& controller) {
 void adicionarProduto(Controller& controller);
 void adicionarFuncionario(Controller& controller);
 
-void registarVenda(Controller& controller, PharmacyRepositoryMemory& repository) {
+void registarVenda(Controller& controller, RepositorioFarmaciaMemoria& repositorio) {
     listarProdutos(controller);
 
     vector<pair<int, int>> itens;
@@ -267,7 +267,7 @@ void registarVenda(Controller& controller, PharmacyRepositoryMemory& repository)
     try {
         Venda& venda = controller.registarVenda(itens, Data(19, 5, 2026),
                                                 nomePaciente, receitaValidada);
-        repository.guardarStock(FICHEIRO_STOCK);
+        repositorio.guardarStock(FICHEIRO_STOCK);
         cout << "Venda registada com sucesso em nome de " << venda.getNomePaciente();
         if (precisaReceita) {
             cout << ". Receita registada";
@@ -281,7 +281,7 @@ void registarVenda(Controller& controller, PharmacyRepositoryMemory& repository)
     }
 }
 
-void gerirStock(Controller& controller, PharmacyRepositoryMemory& repository) {
+void gerirStock(Controller& controller, RepositorioFarmaciaMemoria& repositorio) {
     cout << "1 - Adicionar stock\n";
     cout << "2 - Remover stock\n";
     cout << "3 - Adicionar produto\n";
@@ -293,7 +293,7 @@ void gerirStock(Controller& controller, PharmacyRepositoryMemory& repository) {
 
     if (opcao == 3) {
         adicionarProduto(controller);
-        repository.guardarStock(FICHEIRO_STOCK);
+        repositorio.guardarStock(FICHEIRO_STOCK);
         return;
     }
 
@@ -312,11 +312,11 @@ void gerirStock(Controller& controller, PharmacyRepositoryMemory& repository) {
 
     if (opcao == 1) {
         controller.adicionarStock(posicaoProduto, quantidade);
-        repository.guardarStock(FICHEIRO_STOCK);
+        repositorio.guardarStock(FICHEIRO_STOCK);
         cout << "Stock adicionado com sucesso.\n";
     } else if (opcao == 2) {
         controller.removerStock(posicaoProduto, quantidade);
-        repository.guardarStock(FICHEIRO_STOCK);
+        repositorio.guardarStock(FICHEIRO_STOCK);
         cout << "Stock removido com sucesso.\n";
     } else {
         cout << "Opcao invalida.\n";
@@ -466,10 +466,10 @@ void mostrarMenu(const Controller& controller, const string& nomeFarmacia) {
 }
 
 int main() {
-    PharmacyRepositoryMemory repository;
-    Controller controller(&repository);
+    RepositorioFarmaciaMemoria repositorio;
+    Controller controller(&repositorio);
     MockData::carregarDadosIniciais(controller);
-    repository.carregarStockGuardado(FICHEIRO_STOCK);
+    repositorio.carregarStockGuardado(FICHEIRO_STOCK);
 
     cout << "Sistema de Gestao de Farmacia\n";
     string nomeFarmacia = lerTexto("Nome da farmacia: ");
@@ -492,14 +492,14 @@ int main() {
                     listarProdutos(controller);
                     break;
                 case 2:
-                    registarVenda(controller, repository);
+                    registarVenda(controller, repositorio);
                     break;
                 case 3:
                     listarReceitas(controller);
                     break;
                 case 4:
                     if (controller.utilizadorEhGestor()) {
-                        gerirStock(controller, repository);
+                        gerirStock(controller, repositorio);
                     } else {
                         cout << "Opcao invalida.\n";
                     }
