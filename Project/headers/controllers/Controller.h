@@ -7,6 +7,7 @@
 #include "../model/Entidades/Produto.h"
 #include "../model/Entidades/Receita.h"
 #include "../model/Entidades/Venda.h"
+#include "../repo/IPharmacyRepository.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -20,20 +21,16 @@ struct RelatorioResumo {
 
 class Controller {
 private:
-    std::vector<std::unique_ptr<Produto>> produtos;
-    std::vector<std::unique_ptr<Funcionario>> funcionarios;
-    std::vector<std::unique_ptr<Receita>> receitas;
-    std::vector<std::unique_ptr<Venda>> vendas;
+    IPharmacyRepository* repository{};
     Funcionario* utilizadorAutenticado{};
 
-    Produto* procurarProdutoInterno(int id) const;
-    Funcionario* procurarFuncionarioInterno(int id) const;
-    Receita* procurarReceitaInterna(int id) const;
+    Produto* obterProdutoPorPosicaoInterna(int posicao) const;
+    Receita* procurarReceitaPorCodigoInterna(int codigo) const;
     void exigirAutenticacao() const;
     void exigirGestor() const;
 
 public:
-    Controller();
+    explicit Controller(IPharmacyRepository* repository);
 
     Funcionario* autenticar(const std::string& username, const std::string& password);
     void terminarSessao();
@@ -55,24 +52,23 @@ public:
                             const std::string& password);
     Receita& adicionarReceita(const std::string& nomePaciente,
                               const std::string& medicamento,
-                              const Data& dataValidade,
+                              int codigoReceita,
                               const std::string& medico);
 
-    Produto* procurarProduto(int id) const;
-    Funcionario* procurarFuncionario(int id) const;
-    Receita* procurarReceita(int id) const;
+    Produto* obterProdutoPorPosicao(int posicao) const;
 
     const std::vector<std::unique_ptr<Produto>>& listarProdutos() const;
     const std::vector<std::unique_ptr<Funcionario>>& listarFuncionarios() const;
+    const std::vector<std::unique_ptr<Receita>>& listarReceitas() const;
     const std::vector<std::unique_ptr<Venda>>& listarVendas() const;
 
-    int consultarStock(int produtoId) const;
-    void adicionarStock(int produtoId, int quantidade);
-    void removerStock(int produtoId, int quantidade);
+    int consultarStock(int posicaoProduto) const;
+    void adicionarStock(int posicaoProduto, int quantidade);
+    void removerStock(int posicaoProduto, int quantidade);
 
     Venda& registarVenda(const std::vector<std::pair<int, int>>& itens,
                          const Data& dataVenda,
-                         int receitaId = 0);
+                         int codigoReceita = 0);
 
     RelatorioResumo gerarRelatorioResumo() const;
 };

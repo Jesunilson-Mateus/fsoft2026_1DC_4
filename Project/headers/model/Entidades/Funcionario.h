@@ -5,8 +5,6 @@
 
 class Funcionario {
 protected:
-    static int proximoId;
-    int id{};
     std::string nome;
     std::string username;
     std::string password;
@@ -21,7 +19,6 @@ public:
                 const std::string& password, const std::string& cargo);
     virtual ~Funcionario() = default;
 
-    int getId() const;
     const std::string& getNome() const;
     const std::string& getUsername() const;
     const std::string& getPassword() const;
@@ -32,8 +29,6 @@ public:
 
     bool autenticar(const std::string& username, const std::string& password) const;
 
-    bool operator==(const Funcionario& outro) const;
-    bool operator==(int id) const;
     bool operator==(const std::string& username) const;
 };
 

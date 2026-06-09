@@ -1,8 +1,6 @@
 #include "Funcionario.h"
 #include <stdexcept>
 
-int Funcionario::proximoId = 1000;
-
 bool Funcionario::ehNomeValido(const std::string& nome) {
     return nome.length() >= 3;
 }
@@ -12,11 +10,11 @@ bool Funcionario::ehUsernameValido(const std::string& username) {
 }
 
 Funcionario::Funcionario()
-    : id(++proximoId), nome(""), username(""), password(""), cargo("Funcionario") {}
+    : nome(""), username(""), password(""), cargo("Funcionario") {}
 
 Funcionario::Funcionario(const std::string& nome, const std::string& username,
                          const std::string& password, const std::string& cargo)
-    : id(++proximoId), cargo(cargo) {
+    : cargo(cargo) {
     if (!ehNomeValido(nome)) {
         throw std::invalid_argument("Nome deve ter pelo menos 3 caracteres.");
     }
@@ -30,10 +28,6 @@ Funcionario::Funcionario(const std::string& nome, const std::string& username,
     this->nome = nome;
     this->username = username;
     this->password = password;
-}
-
-int Funcionario::getId() const {
-    return id;
 }
 
 const std::string& Funcionario::getNome() const {
@@ -68,14 +62,6 @@ void Funcionario::setPassword(const std::string& password) {
 
 bool Funcionario::autenticar(const std::string& username, const std::string& password) const {
     return this->username == username && this->password == password;
-}
-
-bool Funcionario::operator==(const Funcionario& outro) const {
-    return id == outro.id;
-}
-
-bool Funcionario::operator==(int id) const {
-    return this->id == id;
 }
 
 bool Funcionario::operator==(const std::string& username) const {

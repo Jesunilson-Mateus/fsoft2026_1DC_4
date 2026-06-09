@@ -1,9 +1,11 @@
 #include "../Project/headers/controllers/Controller.h"
+#include "../Project/headers/repo/PharmacyRepositoryMemory.h"
 #include <cassert>
 #include <stdexcept>
 
 int main() {
-    Controller controller;
+    PharmacyRepositoryMemory repository;
+    Controller controller(&repository);
 
     Gestor& gestor = controller.adicionarGestor("Maria Gestora", "gestora", "1234");
     Funcionario& funcionario = controller.adicionarFuncionario("Joao Silva", "joao", "abcd");
@@ -12,32 +14,32 @@ int main() {
         "Antibiotico", "Medicamento", 8.0, 5, true, "500mg",
         "Farmalab", Data(1, 1, 2027));
     Receita& receita = controller.adicionarReceita(
-        "Ana Paciente", "Antibiotico", Data(1, 1, 2027), "Dra. Costa");
+        "Ana Paciente", "Antibiotico", 45637, "Dra. Costa");
 
     assert(controller.autenticar("joao", "abcd") == &funcionario);
-    assert(controller.consultarStock(produto.getId()) == 10);
+    assert(controller.consultarStock(1) == 10);
 
     bool bloqueouStock = false;
     try {
-        controller.adicionarStock(produto.getId(), 3);
+        controller.adicionarStock(1, 3);
     } catch (const std::runtime_error&) {
         bloqueouStock = true;
     }
     assert(bloqueouStock);
 
     Venda& vendaFuncionario = controller.registarVenda(
-        {{produto.getId(), 2}, {medicamento.getId(), 1}},
+        {{1, 2}, {2, 1}},
         Data(19, 5, 2026),
-        receita.getId());
+        45637);
     assert(vendaFuncionario.getTotal() == 33.0);
-    assert(controller.consultarStock(produto.getId()) == 8);
-    assert(controller.consultarStock(medicamento.getId()) == 4);
+    assert(controller.consultarStock(1) == 8);
+    assert(controller.consultarStock(2) == 4);
     assert(receita.foiUtilizada());
 
     controller.autenticar("gestora", "1234");
     assert(controller.getUtilizadorAutenticado() == &gestor);
-    controller.adicionarStock(produto.getId(), 5);
-    assert(controller.consultarStock(produto.getId()) == 13);
+    controller.adicionarStock(1, 5);
+    assert(controller.consultarStock(1) == 13);
 
     RelatorioResumo resumo = controller.gerarRelatorioResumo();
     assert(resumo.totalProdutos == 2);
