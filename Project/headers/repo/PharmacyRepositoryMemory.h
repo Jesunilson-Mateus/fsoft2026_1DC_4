@@ -2,6 +2,7 @@
 #define FSOFT2026_1DC_4_PHARMACYREPOSITORYMEMORY_H
 
 #include "IPharmacyRepository.h"
+#include <string>
 
 class PharmacyRepositoryMemory : public IPharmacyRepository {
 private:
@@ -15,6 +16,9 @@ public:
     std::vector<std::unique_ptr<Funcionario>>& getFuncionarios() override;
     std::vector<std::unique_ptr<Receita>>& getReceitas() override;
     std::vector<std::unique_ptr<Venda>>& getVendas() override;
+
+    void carregarStockGuardado(const std::string& caminhoFicheiro);
+    void guardarStock(const std::string& caminhoFicheiro) const;
 };
 
 #endif //FSOFT2026_1DC_4_PHARMACYREPOSITORYMEMORY_H

@@ -4,12 +4,15 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 using namespace std;
+
+const string FICHEIRO_STOCK = "stock_persistente.txt";
 
 void limparEntrada() {
     cin.clear();
@@ -95,6 +98,23 @@ bool lerTextoOpcional(const string& mensagem, string& valor) {
     return !pediuVoltar(valor);
 }
 
+bool lerSimNao(const string& mensagem) {
+    string resposta;
+    while (true) {
+        cout << mensagem << " (sim/nao): ";
+        getline(cin, resposta);
+
+        if (resposta == "sim" || resposta == "Sim" || resposta == "s" || resposta == "S") {
+            return true;
+        }
+        if (resposta == "nao" || resposta == "Nao" || resposta == "n" || resposta == "N") {
+            return false;
+        }
+
+        cout << "Resposta invalida. Escreva sim ou nao.\n";
+    }
+}
+
 bool lerDataOpcional(const string& prefixo, Data& data) {
     int dia{};
     int mes{};
@@ -147,6 +167,15 @@ void listarReceitas(const Controller& controller) {
     }
 }
 
+Receita* procurarReceitaDisponivel(const Controller& controller, const string& medicamento) {
+    for (const auto& receita : controller.listarReceitas()) {
+        if (!receita->foiUtilizada() && receita->getMedicamento() == medicamento) {
+            return receita.get();
+        }
+    }
+    return nullptr;
+}
+
 void listarFuncionarios(const Controller& controller) {
     cout << "\nFuncionarios registados\n";
     cout << left << setw(8) << "Opcao" << setw(24) << "Nome"
@@ -178,11 +207,14 @@ void iniciarSessao(Controller& controller) {
          << " (" << controller.getUtilizadorAutenticado()->getCargo() << ").\n";
 }
 
-void registarVenda(Controller& controller) {
+void registarVenda(Controller& controller, PharmacyRepositoryMemory& repository) {
     listarProdutos(controller);
 
     vector<pair<int, int>> itens;
+    map<int, int> quantidadesPorProduto;
     bool precisaReceita = false;
+    int codigoReceita = 0;
+    string nomePacienteReceita;
     while (true) {
         int posicaoProduto{};
         if (!lerInteiroOpcional("\nOpcao do produto (0 para terminar venda)", posicaoProduto)) {
@@ -196,15 +228,44 @@ void registarVenda(Controller& controller) {
             cout << "Venda cancelada.\n";
             return;
         }
+        if (quantidade <= 0) {
+            cout << "Quantidade invalida.\n";
+            continue;
+        }
 
         Produto* produto = controller.obterProdutoPorPosicao(posicaoProduto);
+        if (produto == nullptr) {
+            cout << "Produto nao encontrado.\n";
+            continue;
+        }
+
+        int quantidadeTotal = quantidadesPorProduto[posicaoProduto] + quantidade;
+        if (quantidadeTotal > produto->getQuantidadeStock()) {
+            cout << "Falha na venda por falta de stock.\n";
+            return;
+        }
+
         Medicamento* medicamento = dynamic_cast<Medicamento*>(produto);
         if (medicamento != nullptr && medicamento->getRequerReceita()) {
             precisaReceita = true;
             cout << "Este medicamento requer receita.\n";
+            if (!lerSimNao("A receita e valida?")) {
+                cout << "Falha na venda: receita invalida.\n";
+                return;
+            }
+
+            Receita* receita = procurarReceitaDisponivel(controller, medicamento->getNome());
+            if (receita == nullptr) {
+                cout << "Falha na venda: nao existe receita disponivel para este medicamento.\n";
+                return;
+            }
+
+            codigoReceita = receita->getCodigoReceita();
+            nomePacienteReceita = receita->getNomePaciente();
         }
 
         itens.push_back({posicaoProduto, quantidade});
+        quantidadesPorProduto[posicaoProduto] = quantidadeTotal;
     }
 
     if (itens.empty()) {
@@ -212,33 +273,20 @@ void registarVenda(Controller& controller) {
         return;
     }
 
-    while (true) {
-        int codigoReceita{};
+    try {
+        Venda& venda = controller.registarVenda(itens, Data(19, 5, 2026), codigoReceita);
+        repository.guardarStock(FICHEIRO_STOCK);
+        cout << "Venda registada com sucesso";
         if (precisaReceita) {
-            listarReceitas(controller);
-            cout << "Insira o codigo da receita de 5 digitos.\n";
-            if (!lerInteiroOpcional("Codigo da receita", codigoReceita)) {
-                cout << "Venda cancelada.\n";
-                return;
-            }
+            cout << " em nome de " << nomePacienteReceita;
         }
-
-        try {
-            Venda& venda = controller.registarVenda(itens, Data(19, 5, 2026), codigoReceita);
-            cout << "Venda registada com sucesso. Total: " << fixed << setprecision(2)
-                 << venda.getTotal() << " EUR\n";
-            return;
-        } catch (const exception& erro) {
-            if (!precisaReceita) {
-                throw;
-            }
-            cout << "Erro: " << erro.what() << "\n";
-            cout << "Tente novamente ou escreva v para voltar.\n";
-        }
+        cout << ". Total: " << fixed << setprecision(2) << venda.getTotal() << " EUR\n";
+    } catch (const exception& erro) {
+        cout << "Falha na venda: " << erro.what() << "\n";
     }
 }
 
-void gerirStock(Controller& controller) {
+void gerirStock(Controller& controller, PharmacyRepositoryMemory& repository) {
     listarProdutos(controller);
     int posicaoProduto{};
     int quantidade{};
@@ -262,9 +310,11 @@ void gerirStock(Controller& controller) {
 
     if (opcao == 1) {
         controller.adicionarStock(posicaoProduto, quantidade);
+        repository.guardarStock(FICHEIRO_STOCK);
         cout << "Stock adicionado com sucesso.\n";
     } else if (opcao == 2) {
         controller.removerStock(posicaoProduto, quantidade);
+        repository.guardarStock(FICHEIRO_STOCK);
         cout << "Stock removido com sucesso.\n";
     } else {
         cout << "Opcao invalida.\n";
@@ -440,6 +490,7 @@ int main() {
     PharmacyRepositoryMemory repository;
     Controller controller(&repository);
     MockData::carregarDadosIniciais(controller);
+    repository.carregarStockGuardado(FICHEIRO_STOCK);
 
     cout << "Sistema de Gestao de Farmacia\n";
 
@@ -458,13 +509,13 @@ int main() {
                     listarProdutos(controller);
                     break;
                 case 2:
-                    registarVenda(controller);
+                    registarVenda(controller, repository);
                     break;
                 case 3:
                     listarReceitas(controller);
                     break;
                 case 4:
-                    gerirStock(controller);
+                    gerirStock(controller, repository);
                     break;
                 case 5:
                     adicionarProduto(controller);
