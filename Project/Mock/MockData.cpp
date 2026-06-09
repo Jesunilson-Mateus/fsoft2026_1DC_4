@@ -14,12 +14,7 @@ void MockData::inserirProdutos(Controller& controller) {
                                     "500mg", "Farmalab", Data(1, 1, 2027));
 }
 
-void MockData::inserirReceitas(Controller& controller) {
-    controller.adicionarReceita("Ana Paciente", "Antibiotico", 45637, "Dra. Costa");
-}
-
 void MockData::carregarDadosIniciais(Controller& controller) {
     inserirFuncionarios(controller);
     inserirProdutos(controller);
-    inserirReceitas(controller);
 }

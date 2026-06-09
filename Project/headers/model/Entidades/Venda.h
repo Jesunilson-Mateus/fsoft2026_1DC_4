@@ -5,6 +5,7 @@
 #include "Funcionario.h"
 #include "Produto.h"
 #include "Receita.h"
+#include <string>
 #include <vector>
 
 struct ItemVenda {
@@ -23,6 +24,7 @@ private:
     std::vector<ItemVenda> itens;
     double total{};
     Receita* receita{};
+    std::string nomePaciente;
 
 public:
     Venda();
@@ -33,9 +35,11 @@ public:
     const std::vector<ItemVenda>& getItens() const;
     double getTotal() const;
     Receita* getReceita() const;
+    const std::string& getNomePaciente() const;
 
     void adicionarItem(Produto* produto, int quantidade);
     void definirReceita(Receita* receita);
+    void definirNomePaciente(const std::string& nomePaciente);
     void calcularTotal();
     bool processarVenda();
 

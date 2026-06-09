@@ -25,6 +25,17 @@ Receita* Controller::procurarReceitaPorCodigoInterna(int codigo) const {
     return nullptr;
 }
 
+int Controller::gerarCodigoReceitaInterno() const {
+    int codigo = 10000;
+    while (procurarReceitaPorCodigoInterna(codigo) != nullptr && codigo <= 99999) {
+        ++codigo;
+    }
+    if (codigo > 99999) {
+        throw std::runtime_error("Nao foi possivel gerar codigo de receita.");
+    }
+    return codigo;
+}
+
 void Controller::exigirAutenticacao() const {
     if (utilizadorAutenticado == nullptr) {
         throw std::runtime_error("Operacao requer autenticacao.");
@@ -162,15 +173,21 @@ void Controller::removerStock(int posicaoProduto, int quantidade) {
 
 Venda& Controller::registarVenda(const std::vector<std::pair<int, int>>& itens,
                                  const Data& dataVenda,
-                                 int codigoReceita) {
+                                 const std::string& nomePaciente,
+                                 bool receitaValidada) {
     exigirAutenticacao();
     if (itens.empty()) {
         throw std::invalid_argument("Venda deve conter pelo menos um item.");
     }
+    if (nomePaciente.length() < 3) {
+        throw std::invalid_argument("Nome do paciente deve ter pelo menos 3 caracteres.");
+    }
 
     std::unique_ptr<Venda> venda(new Venda(dataVenda, utilizadorAutenticado));
-    Receita* receita = codigoReceita > 0 ? procurarReceitaPorCodigoInterna(codigoReceita) : nullptr;
+    venda->definirNomePaciente(nomePaciente);
+    Receita* receita = nullptr;
     bool receitaFoiNecessaria = false;
+    std::string medicamentoDaReceita;
 
     for (const auto& item : itens) {
         Produto* produto = obterProdutoPorPosicaoInterna(item.first);
@@ -181,17 +198,22 @@ Venda& Controller::registarVenda(const std::vector<std::pair<int, int>>& itens,
         Medicamento* medicamento = dynamic_cast<Medicamento*>(produto);
         if (medicamento != nullptr && medicamento->getRequerReceita()) {
             receitaFoiNecessaria = true;
-            if (receita == nullptr) {
-                throw std::runtime_error("Medicamento requer codigo da receita valido.");
+            if (!receitaValidada) {
+                throw std::runtime_error("Medicamento requer receita valida.");
             }
-            if (receita->getMedicamento() != medicamento->getNome()) {
-                throw std::runtime_error("Receita nao corresponde ao medicamento vendido.");
+            if (medicamentoDaReceita.empty()) {
+                medicamentoDaReceita = medicamento->getNome();
             }
-            receita->validarCodigo(codigoReceita);
-            venda->definirReceita(receita);
         }
 
         venda->adicionarItem(produto, item.second);
+    }
+
+    if (receitaFoiNecessaria) {
+        receita = &adicionarReceita(nomePaciente, medicamentoDaReceita,
+                                    gerarCodigoReceitaInterno(),
+                                    "Receita validada na venda");
+        venda->definirReceita(receita);
     }
 
     venda->processarVenda();

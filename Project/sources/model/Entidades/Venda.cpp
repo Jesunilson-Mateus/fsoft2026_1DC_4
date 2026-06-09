@@ -34,6 +34,10 @@ Receita* Venda::getReceita() const {
     return receita;
 }
 
+const std::string& Venda::getNomePaciente() const {
+    return nomePaciente;
+}
+
 void Venda::adicionarItem(Produto* produto, int quantidade) {
     if (produto == nullptr) {
         throw std::invalid_argument("Produto nao pode ser nulo.");
@@ -47,6 +51,10 @@ void Venda::adicionarItem(Produto* produto, int quantidade) {
 
 void Venda::definirReceita(Receita* receita) {
     this->receita = receita;
+}
+
+void Venda::definirNomePaciente(const std::string& nomePaciente) {
+    this->nomePaciente = nomePaciente;
 }
 
 void Venda::calcularTotal() {

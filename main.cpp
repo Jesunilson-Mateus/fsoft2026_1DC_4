@@ -167,15 +167,6 @@ void listarReceitas(const Controller& controller) {
     }
 }
 
-Receita* procurarReceitaDisponivel(const Controller& controller, const string& medicamento) {
-    for (const auto& receita : controller.listarReceitas()) {
-        if (!receita->foiUtilizada() && receita->getMedicamento() == medicamento) {
-            return receita.get();
-        }
-    }
-    return nullptr;
-}
-
 void listarFuncionarios(const Controller& controller) {
     cout << "\nFuncionarios registados\n";
     cout << left << setw(8) << "Opcao" << setw(24) << "Nome"
@@ -207,14 +198,22 @@ void iniciarSessao(Controller& controller) {
          << " (" << controller.getUtilizadorAutenticado()->getCargo() << ").\n";
 }
 
+void adicionarProduto(Controller& controller);
+void adicionarFuncionario(Controller& controller);
+
 void registarVenda(Controller& controller, PharmacyRepositoryMemory& repository) {
     listarProdutos(controller);
 
     vector<pair<int, int>> itens;
     map<int, int> quantidadesPorProduto;
     bool precisaReceita = false;
-    int codigoReceita = 0;
-    string nomePacienteReceita;
+    bool receitaValidada = false;
+    string nomePaciente;
+    if (!lerTextoOpcional("Nome do paciente", nomePaciente)) {
+        cout << "Venda cancelada.\n";
+        return;
+    }
+
     while (true) {
         int posicaoProduto{};
         if (!lerInteiroOpcional("\nOpcao do produto (0 para terminar venda)", posicaoProduto)) {
@@ -253,15 +252,7 @@ void registarVenda(Controller& controller, PharmacyRepositoryMemory& repository)
                 cout << "Falha na venda: receita invalida.\n";
                 return;
             }
-
-            Receita* receita = procurarReceitaDisponivel(controller, medicamento->getNome());
-            if (receita == nullptr) {
-                cout << "Falha na venda: nao existe receita disponivel para este medicamento.\n";
-                return;
-            }
-
-            codigoReceita = receita->getCodigoReceita();
-            nomePacienteReceita = receita->getNomePaciente();
+            receitaValidada = true;
         }
 
         itens.push_back({posicaoProduto, quantidade});
@@ -274,11 +265,15 @@ void registarVenda(Controller& controller, PharmacyRepositoryMemory& repository)
     }
 
     try {
-        Venda& venda = controller.registarVenda(itens, Data(19, 5, 2026), codigoReceita);
+        Venda& venda = controller.registarVenda(itens, Data(19, 5, 2026),
+                                                nomePaciente, receitaValidada);
         repository.guardarStock(FICHEIRO_STOCK);
-        cout << "Venda registada com sucesso";
+        cout << "Venda registada com sucesso em nome de " << venda.getNomePaciente();
         if (precisaReceita) {
-            cout << " em nome de " << nomePacienteReceita;
+            cout << ". Receita registada";
+            if (venda.getReceita() != nullptr) {
+                cout << " para " << venda.getReceita()->getMedicamento();
+            }
         }
         cout << ". Total: " << fixed << setprecision(2) << venda.getTotal() << " EUR\n";
     } catch (const exception& erro) {
@@ -287,6 +282,21 @@ void registarVenda(Controller& controller, PharmacyRepositoryMemory& repository)
 }
 
 void gerirStock(Controller& controller, PharmacyRepositoryMemory& repository) {
+    cout << "1 - Adicionar stock\n";
+    cout << "2 - Remover stock\n";
+    cout << "3 - Adicionar produto\n";
+    int opcao{};
+    if (!lerInteiroOpcional("Opcao", opcao)) {
+        cout << "Operacao cancelada.\n";
+        return;
+    }
+
+    if (opcao == 3) {
+        adicionarProduto(controller);
+        repository.guardarStock(FICHEIRO_STOCK);
+        return;
+    }
+
     listarProdutos(controller);
     int posicaoProduto{};
     int quantidade{};
@@ -296,14 +306,6 @@ void gerirStock(Controller& controller, PharmacyRepositoryMemory& repository) {
         return;
     }
     if (!lerInteiroOpcional("Quantidade", quantidade)) {
-        cout << "Operacao cancelada.\n";
-        return;
-    }
-
-    cout << "1 - Adicionar stock\n";
-    cout << "2 - Remover stock\n";
-    int opcao{};
-    if (!lerInteiroOpcional("Opcao", opcao)) {
         cout << "Operacao cancelada.\n";
         return;
     }
@@ -323,16 +325,10 @@ void gerirStock(Controller& controller, PharmacyRepositoryMemory& repository) {
 
 void adicionarProduto(Controller& controller) {
     string nome;
-    string categoria;
-    string descricao;
     double preco{};
     int stock{};
 
     if (!lerTextoOpcional("Nome", nome)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-    if (!lerTextoOpcional("Categoria", categoria)) {
         cout << "Adicao cancelada.\n";
         return;
     }
@@ -344,11 +340,6 @@ void adicionarProduto(Controller& controller) {
         cout << "Adicao cancelada.\n";
         return;
     }
-    if (!lerTextoOpcional("Descricao", descricao)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-
     cout << "1 - Produto comum\n";
     cout << "2 - Medicamento\n";
     int tipo{};
@@ -358,37 +349,40 @@ void adicionarProduto(Controller& controller) {
     }
 
     if (tipo == 1) {
-        controller.adicionarProduto(nome, categoria, preco, stock, descricao);
+        controller.adicionarProduto(nome, "Produto comum", preco, stock);
     } else if (tipo == 2) {
         int requerReceita{};
-        string dosagem;
-        string fabricante;
-        Data validade;
 
         if (!lerInteiroOpcional("Requer receita? (1 sim, 0 nao)", requerReceita)) {
             cout << "Adicao cancelada.\n";
             return;
         }
-        if (!lerTextoOpcional("Dosagem", dosagem)) {
-            cout << "Adicao cancelada.\n";
-            return;
-        }
-        if (!lerTextoOpcional("Fabricante", fabricante)) {
-            cout << "Adicao cancelada.\n";
-            return;
-        }
-        if (!lerDataOpcional("Validade", validade)) {
-            cout << "Adicao cancelada.\n";
-            return;
-        }
-        controller.adicionarMedicamento(nome, categoria, preco, stock, requerReceita == 1,
-                                        dosagem, fabricante, validade, descricao);
+        controller.adicionarMedicamento(nome, "Medicamento", preco, stock, requerReceita == 1,
+                                        "", "", Data(1, 1, 2027));
     } else {
         cout << "Tipo invalido.\n";
         return;
     }
 
     cout << "Produto adicionado com sucesso.\n";
+}
+
+void gerirFuncionarios(Controller& controller) {
+    cout << "1 - Adicionar funcionario/gestor\n";
+    cout << "2 - Listar funcionarios\n";
+    int opcao{};
+    if (!lerInteiroOpcional("Opcao", opcao)) {
+        cout << "Operacao cancelada.\n";
+        return;
+    }
+
+    if (opcao == 1) {
+        adicionarFuncionario(controller);
+    } else if (opcao == 2) {
+        listarFuncionarios(controller);
+    } else {
+        cout << "Opcao invalida.\n";
+    }
 }
 
 void adicionarFuncionario(Controller& controller) {
@@ -429,33 +423,6 @@ void adicionarFuncionario(Controller& controller) {
     cout << "Utilizador criado com sucesso.\n";
 }
 
-void adicionarReceita(Controller& controller) {
-    string paciente;
-    string medicamento;
-    string medico;
-    int codigo{};
-
-    if (!lerTextoOpcional("Nome do paciente", paciente)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-    if (!lerTextoOpcional("Medicamento", medicamento)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-    if (!lerInteiroOpcional("Codigo da receita com 5 digitos", codigo)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-    if (!lerTextoOpcional("Medico", medico)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-
-    controller.adicionarReceita(paciente, medicamento, codigo, medico);
-    cout << "Receita adicionada com sucesso.\n";
-}
-
 void mostrarRelatorio(Controller& controller) {
     RelatorioResumo resumo = controller.gerarRelatorioResumo();
     cout << "\nRelatorio resumo\n";
@@ -465,19 +432,31 @@ void mostrarRelatorio(Controller& controller) {
     cout << "Total faturado: " << fixed << setprecision(2) << resumo.totalFaturado << " EUR\n";
 }
 
-void mostrarMenu(const Controller& controller) {
-    cout << "\n=== Sistema de Gestao de Farmacia ===\n";
+void gerirRelatorios(Controller& controller) {
+    cout << "1 - Relatorio resumo\n";
+    int opcao{};
+    if (!lerInteiroOpcional("Opcao", opcao)) {
+        cout << "Operacao cancelada.\n";
+        return;
+    }
+
+    if (opcao == 1) {
+        mostrarRelatorio(controller);
+    } else {
+        cout << "Opcao invalida.\n";
+    }
+}
+
+void mostrarMenu(const Controller& controller, const string& nomeFarmacia) {
+    cout << "\n=== Sistema de Gestao de Farmacia - " << nomeFarmacia << " ===\n";
     cout << "1 - Listar produtos/stock\n";
     cout << "2 - Registar venda\n";
     cout << "3 - Listar receitas\n";
 
     if (controller.utilizadorEhGestor()) {
         cout << "4 - Gerir stock\n";
-        cout << "5 - Adicionar produto\n";
-        cout << "6 - Adicionar funcionario/gestor\n";
-        cout << "7 - Adicionar receita\n";
-        cout << "8 - Listar funcionarios\n";
-        cout << "9 - Relatorio resumo\n";
+        cout << "5 - Gestao dos funcionarios\n";
+        cout << "9 - Gerir relatorios\n";
         cout << "10 - Terminar sessao\n";
     } else {
         cout << "9 - Terminar sessao\n";
@@ -493,6 +472,10 @@ int main() {
     repository.carregarStockGuardado(FICHEIRO_STOCK);
 
     cout << "Sistema de Gestao de Farmacia\n";
+    string nomeFarmacia = lerTexto("Nome da farmacia: ");
+    if (nomeFarmacia.empty()) {
+        nomeFarmacia = "Farmacia";
+    }
 
     bool sair = false;
     while (!sair) {
@@ -501,7 +484,7 @@ int main() {
                 iniciarSessao(controller);
             }
 
-            mostrarMenu(controller);
+            mostrarMenu(controller, nomeFarmacia);
             int opcao = lerInteiro("Opcao: ");
 
             switch (opcao) {
@@ -515,27 +498,22 @@ int main() {
                     listarReceitas(controller);
                     break;
                 case 4:
-                    gerirStock(controller, repository);
+                    if (controller.utilizadorEhGestor()) {
+                        gerirStock(controller, repository);
+                    } else {
+                        cout << "Opcao invalida.\n";
+                    }
                     break;
                 case 5:
-                    adicionarProduto(controller);
-                    break;
-                case 6:
-                    adicionarFuncionario(controller);
-                    break;
-                case 7:
-                    adicionarReceita(controller);
-                    break;
-                case 8:
                     if (controller.utilizadorEhGestor()) {
-                        listarFuncionarios(controller);
+                        gerirFuncionarios(controller);
                     } else {
                         cout << "Opcao invalida.\n";
                     }
                     break;
                 case 9:
                     if (controller.utilizadorEhGestor()) {
-                        mostrarRelatorio(controller);
+                        gerirRelatorios(controller);
                     } else {
                         controller.terminarSessao();
                         cout << "Sessao terminada.\n";

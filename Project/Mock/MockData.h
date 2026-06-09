@@ -7,7 +7,6 @@ class MockData {
 private:
     static void inserirFuncionarios(Controller& controller);
     static void inserirProdutos(Controller& controller);
-    static void inserirReceitas(Controller& controller);
 
 public:
     static void carregarDadosIniciais(Controller& controller);

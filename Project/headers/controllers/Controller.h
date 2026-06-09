@@ -26,6 +26,7 @@ private:
 
     Produto* obterProdutoPorPosicaoInterna(int posicao) const;
     Receita* procurarReceitaPorCodigoInterna(int codigo) const;
+    int gerarCodigoReceitaInterno() const;
     void exigirAutenticacao() const;
     void exigirGestor() const;
 
@@ -68,7 +69,8 @@ public:
 
     Venda& registarVenda(const std::vector<std::pair<int, int>>& itens,
                          const Data& dataVenda,
-                         int codigoReceita = 0);
+                         const std::string& nomePaciente,
+                         bool receitaValidada = false);
 
     RelatorioResumo gerarRelatorioResumo() const;
 };

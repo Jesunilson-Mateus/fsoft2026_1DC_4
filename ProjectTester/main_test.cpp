@@ -13,8 +13,6 @@ int main() {
     Medicamento& medicamento = controller.adicionarMedicamento(
         "Antibiotico", "Medicamento", 8.0, 5, true, "500mg",
         "Farmalab", Data(1, 1, 2027));
-    Receita& receita = controller.adicionarReceita(
-        "Ana Paciente", "Antibiotico", 45637, "Dra. Costa");
 
     assert(controller.autenticar("joao", "abcd") == &funcionario);
     assert(controller.consultarStock(1) == 10);
@@ -30,11 +28,16 @@ int main() {
     Venda& vendaFuncionario = controller.registarVenda(
         {{1, 2}, {2, 1}},
         Data(19, 5, 2026),
-        45637);
+        "Ana Paciente",
+        true);
     assert(vendaFuncionario.getTotal() == 33.0);
+    assert(vendaFuncionario.getNomePaciente() == "Ana Paciente");
+    assert(vendaFuncionario.getReceita() != nullptr);
+    assert(vendaFuncionario.getReceita()->getMedicamento() == medicamento.getNome());
     assert(controller.consultarStock(1) == 8);
     assert(controller.consultarStock(2) == 4);
-    assert(receita.foiUtilizada());
+    assert(controller.listarReceitas().size() == 1);
+    assert(controller.listarReceitas().front()->foiUtilizada());
 
     controller.autenticar("gestora", "1234");
     assert(controller.getUtilizadorAutenticado() == &gestor);
