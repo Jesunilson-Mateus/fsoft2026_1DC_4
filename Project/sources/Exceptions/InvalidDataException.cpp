@@ -1,3 +1,3 @@
-//
-// Created by LarsenTivane on 17/05/2026.
-//
+#include "../headers/exceptions/InvalidDataException.h"
+
+// Implementação vazia pois a classe é header-only
