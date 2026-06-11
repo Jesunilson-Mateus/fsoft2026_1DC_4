@@ -1,5 +1,9 @@
 #include "Project/headers/controllers/Controller.h"
 #include "Project/headers/repo/RepositorioFarmaciaMemoria.h"
+#include "Project/headers/exceptions/InvalidDataException.h"
+#include "Project/headers/exceptions/DataConsistencyException.h"
+#include "Project/headers/exceptions/DuplicatedDataException.h"
+#include "Project/headers/exceptions/NoDataException.h"
 #include "Project/Mock/MockData.h"
 #include <iomanip>
 #include <iostream>
@@ -202,69 +206,70 @@ void adicionarProduto(Controller& controller);
 void adicionarFuncionario(Controller& controller);
 
 void registarVenda(Controller& controller, RepositorioFarmaciaMemoria& repositorio) {
-    listarProdutos(controller);
+    try {
+        listarProdutos(controller);
 
-    vector<pair<int, int>> itens;
-    map<int, int> quantidadesPorProduto;
-    bool precisaReceita = false;
-    bool receitaValidada = false;
-    string nomePaciente;
-    if (!lerTextoOpcional("Nome do paciente", nomePaciente)) {
-        cout << "Venda cancelada.\n";
-        return;
-    }
-
-    while (true) {
-        int posicaoProduto{};
-        if (!lerInteiroOpcional("\nOpcao do produto (0 para terminar venda)", posicaoProduto)) {
+        vector<pair<int, int>> itens;
+        map<int, int> quantidadesPorProduto;
+        bool precisaReceita = false;
+        bool receitaValidada = false;
+        string nomePaciente;
+        
+        if (!lerTextoOpcional("Nome do paciente", nomePaciente)) {
             cout << "Venda cancelada.\n";
             return;
         }
-        if (posicaoProduto == 0) break;
 
-        int quantidade{};
-        if (!lerInteiroOpcional("Quantidade", quantidade)) {
-            cout << "Venda cancelada.\n";
-            return;
-        }
-        if (quantidade <= 0) {
-            cout << "Quantidade invalida.\n";
-            continue;
+        if (nomePaciente.empty() || nomePaciente.length() < 3) {
+            throw InvalidDataException("Nome do paciente deve ter pelo menos 3 caracteres");
         }
 
-        Produto* produto = controller.obterProdutoPorPosicao(posicaoProduto);
-        if (produto == nullptr) {
-            cout << "Produto nao encontrado.\n";
-            continue;
-        }
-
-        int quantidadeTotal = quantidadesPorProduto[posicaoProduto] + quantidade;
-        if (quantidadeTotal > produto->getQuantidadeStock()) {
-            cout << "Falha na venda por falta de stock.\n";
-            return;
-        }
-
-        Medicamento* medicamento = dynamic_cast<Medicamento*>(produto);
-        if (medicamento != nullptr && medicamento->getRequerReceita()) {
-            precisaReceita = true;
-            cout << "Este medicamento requer receita.\n";
-            if (!lerSimNao("A receita e valida?")) {
-                cout << "Falha na venda: receita invalida.\n";
+        while (true) {
+            int posicaoProduto{};
+            if (!lerInteiroOpcional("\nOpcao do produto (0 para terminar venda)", posicaoProduto)) {
+                cout << "Venda cancelada.\n";
                 return;
             }
-            receitaValidada = true;
+            if (posicaoProduto == 0) break;
+
+            int quantidade{};
+            if (!lerInteiroOpcional("Quantidade", quantidade)) {
+                cout << "Venda cancelada.\n";
+                return;
+            }
+            
+            if (quantidade <= 0) {
+                throw InvalidDataException("Quantidade deve ser positiva");
+            }
+
+            Produto* produto = controller.obterProdutoPorPosicao(posicaoProduto);
+            if (produto == nullptr) {
+                throw NoDataException("Produto nao encontrado");
+            }
+
+            int quantidadeTotal = quantidadesPorProduto[posicaoProduto] + quantidade;
+            if (quantidadeTotal > produto->getQuantidadeStock()) {
+                throw DataConsistencyException("Stock insuficiente para esta quantidade");
+            }
+
+            Medicamento* medicamento = dynamic_cast<Medicamento*>(produto);
+            if (medicamento != nullptr && medicamento->getRequerReceita()) {
+                precisaReceita = true;
+                cout << "Este medicamento requer receita.\n";
+                if (!lerSimNao("A receita e valida?")) {
+                    throw InvalidDataException("Medicamento requer receita valida");
+                }
+                receitaValidada = true;
+            }
+
+            itens.push_back({posicaoProduto, quantidade});
+            quantidadesPorProduto[posicaoProduto] = quantidadeTotal;
         }
 
-        itens.push_back({posicaoProduto, quantidade});
-        quantidadesPorProduto[posicaoProduto] = quantidadeTotal;
-    }
+        if (itens.empty()) {
+            throw InvalidDataException("Nenhum item foi selecionado para a venda");
+        }
 
-    if (itens.empty()) {
-        cout << "Venda cancelada: nenhum item selecionado.\n";
-        return;
-    }
-
-    try {
         Venda& venda = controller.registarVenda(itens, Data(19, 5, 2026),
                                                 nomePaciente, receitaValidada);
         repositorio.guardarStock(FICHEIRO_STOCK);
@@ -276,173 +281,255 @@ void registarVenda(Controller& controller, RepositorioFarmaciaMemoria& repositor
             }
         }
         cout << ". Total: " << fixed << setprecision(2) << venda.getTotal() << " EUR\n";
+    } catch (const InvalidDataException& erro) {
+        cout << "Falha na venda - Dados invalidos: " << erro.what() << "\n";
+    } catch (const NoDataException& erro) {
+        cout << "Falha na venda - Dados nao encontrados: " << erro.what() << "\n";
+    } catch (const DataConsistencyException& erro) {
+        cout << "Falha na venda - Inconsistencia de dados: " << erro.what() << "\n";
     } catch (const exception& erro) {
-        cout << "Falha na venda: " << erro.what() << "\n";
+        cout << "Falha na venda - Erro desconhecido: " << erro.what() << "\n";
     }
 }
 
 void gerirStock(Controller& controller, RepositorioFarmaciaMemoria& repositorio) {
-    cout << "1 - Adicionar stock\n";
-    cout << "2 - Remover stock\n";
-    cout << "3 - Adicionar produto\n";
-    int opcao{};
-    if (!lerInteiroOpcional("Opcao", opcao)) {
-        cout << "Operacao cancelada.\n";
-        return;
-    }
+    try {
+        cout << "1 - Adicionar stock\n";
+        cout << "2 - Remover stock\n";
+        cout << "3 - Adicionar produto\n";
+        int opcao{};
+        if (!lerInteiroOpcional("Opcao", opcao)) {
+            cout << "Operacao cancelada.\n";
+            return;
+        }
 
-    if (opcao == 3) {
-        adicionarProduto(controller);
-        repositorio.guardarStock(FICHEIRO_STOCK);
-        return;
-    }
+        if (opcao == 3) {
+            adicionarProduto(controller);
+            repositorio.guardarStock(FICHEIRO_STOCK);
+            return;
+        }
 
-    listarProdutos(controller);
-    int posicaoProduto{};
-    int quantidade{};
+        listarProdutos(controller);
+        int posicaoProduto{};
+        int quantidade{};
 
-    if (!lerInteiroOpcional("\nOpcao do produto", posicaoProduto)) {
-        cout << "Operacao cancelada.\n";
-        return;
-    }
-    if (!lerInteiroOpcional("Quantidade", quantidade)) {
-        cout << "Operacao cancelada.\n";
-        return;
-    }
+        if (!lerInteiroOpcional("\nOpcao do produto", posicaoProduto)) {
+            cout << "Operacao cancelada.\n";
+            return;
+        }
+        if (!lerInteiroOpcional("Quantidade", quantidade)) {
+            cout << "Operacao cancelada.\n";
+            return;
+        }
 
-    if (opcao == 1) {
-        controller.adicionarStock(posicaoProduto, quantidade);
-        repositorio.guardarStock(FICHEIRO_STOCK);
-        cout << "Stock adicionado com sucesso.\n";
-    } else if (opcao == 2) {
-        controller.removerStock(posicaoProduto, quantidade);
-        repositorio.guardarStock(FICHEIRO_STOCK);
-        cout << "Stock removido com sucesso.\n";
-    } else {
-        cout << "Opcao invalida.\n";
+        if (quantidade <= 0) {
+            throw InvalidDataException("Quantidade deve ser positiva");
+        }
+
+        if (opcao == 1) {
+            controller.adicionarStock(posicaoProduto, quantidade);
+            repositorio.guardarStock(FICHEIRO_STOCK);
+            cout << "Stock adicionado com sucesso.\n";
+        } else if (opcao == 2) {
+            controller.removerStock(posicaoProduto, quantidade);
+            repositorio.guardarStock(FICHEIRO_STOCK);
+            cout << "Stock removido com sucesso.\n";
+        } else {
+            throw InvalidDataException("Opcao invalida");
+        }
+    } catch (const InvalidDataException& erro) {
+        cout << "Erro na gestao de stock - Dados invalidos: " << erro.what() << "\n";
+    } catch (const DataConsistencyException& erro) {
+        cout << "Erro na gestao de stock - Inconsistencia: " << erro.what() << "\n";
+    } catch (const exception& erro) {
+        cout << "Erro na gestao de stock: " << erro.what() << "\n";
     }
 }
 
 void adicionarProduto(Controller& controller) {
-    string nome;
-    double preco{};
-    int stock{};
+    try {
+        string nome;
+        double preco{};
+        int stock{};
 
-    if (!lerTextoOpcional("Nome", nome)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-    if (!lerDoubleOpcional("Preco", preco)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-    if (!lerInteiroOpcional("Stock inicial", stock)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-    cout << "1 - Produto comum\n";
-    cout << "2 - Medicamento\n";
-    int tipo{};
-    if (!lerInteiroOpcional("Tipo", tipo)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-
-    if (tipo == 1) {
-        controller.adicionarProduto(nome, "Produto comum", preco, stock);
-    } else if (tipo == 2) {
-        int requerReceita{};
-
-        if (!lerInteiroOpcional("Requer receita? (1 sim, 0 nao)", requerReceita)) {
+        if (!lerTextoOpcional("Nome", nome)) {
             cout << "Adicao cancelada.\n";
             return;
         }
-        controller.adicionarMedicamento(nome, "Medicamento", preco, stock, requerReceita == 1);
-    } else {
-        cout << "Tipo invalido.\n";
-        return;
-    }
+        
+        if (nome.empty() || nome.length() < 2) {
+            throw InvalidDataException("Nome do produto deve ter pelo menos 2 caracteres");
+        }
+        
+        if (!lerDoubleOpcional("Preco", preco)) {
+            cout << "Adicao cancelada.\n";
+            return;
+        }
+        
+        if (preco <= 0) {
+            throw InvalidDataException("Preco deve ser positivo");
+        }
+        
+        if (!lerInteiroOpcional("Stock inicial", stock)) {
+            cout << "Adicao cancelada.\n";
+            return;
+        }
+        
+        if (stock < 0) {
+            throw InvalidDataException("Stock nao pode ser negativo");
+        }
+        
+        cout << "1 - Produto comum\n";
+        cout << "2 - Medicamento\n";
+        int tipo{};
+        if (!lerInteiroOpcional("Tipo", tipo)) {
+            cout << "Adicao cancelada.\n";
+            return;
+        }
 
-    cout << "Produto adicionado com sucesso.\n";
+        if (tipo == 1) {
+            controller.adicionarProduto(nome, "Produto comum", preco, stock);
+        } else if (tipo == 2) {
+            int requerReceita{};
+
+            if (!lerInteiroOpcional("Requer receita? (1 sim, 0 nao)", requerReceita)) {
+                cout << "Adicao cancelada.\n";
+                return;
+            }
+            controller.adicionarMedicamento(nome, "Medicamento", preco, stock, requerReceita == 1);
+        } else {
+            throw InvalidDataException("Tipo de produto invalido");
+        }
+
+        cout << "Produto adicionado com sucesso.\n";
+    } catch (const InvalidDataException& erro) {
+        cout << "Erro ao adicionar produto - Dados invalidos: " << erro.what() << "\n";
+    } catch (const exception& erro) {
+        cout << "Erro ao adicionar produto: " << erro.what() << "\n";
+    }
 }
 
 void gerirFuncionarios(Controller& controller) {
-    cout << "1 - Adicionar funcionario/gestor\n";
-    cout << "2 - Listar funcionarios\n";
-    int opcao{};
-    if (!lerInteiroOpcional("Opcao", opcao)) {
-        cout << "Operacao cancelada.\n";
-        return;
-    }
+    try {
+        cout << "1 - Adicionar funcionario/gestor\n";
+        cout << "2 - Listar funcionarios\n";
+        int opcao{};
+        if (!lerInteiroOpcional("Opcao", opcao)) {
+            cout << "Operacao cancelada.\n";
+            return;
+        }
 
-    if (opcao == 1) {
-        adicionarFuncionario(controller);
-    } else if (opcao == 2) {
-        listarFuncionarios(controller);
-    } else {
-        cout << "Opcao invalida.\n";
+        if (opcao == 1) {
+            adicionarFuncionario(controller);
+        } else if (opcao == 2) {
+            listarFuncionarios(controller);
+        } else {
+            throw InvalidDataException("Opcao invalida");
+        }
+    } catch (const InvalidDataException& erro) {
+        cout << "Erro na gestao de funcionarios - Dados invalidos: " << erro.what() << "\n";
+    } catch (const exception& erro) {
+        cout << "Erro na gestao de funcionarios: " << erro.what() << "\n";
     }
 }
 
 void adicionarFuncionario(Controller& controller) {
-    string nome;
-    string username;
-    string password;
+    try {
+        string nome;
+        string username;
+        string password;
 
-    if (!lerTextoOpcional("Nome", nome)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-    if (!lerTextoOpcional("Username", username)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
-    if (!lerTextoOpcional("Password", password)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
+        if (!lerTextoOpcional("Nome", nome)) {
+            cout << "Adicao cancelada.\n";
+            return;
+        }
+        
+        if (nome.empty() || nome.length() < 3) {
+            throw InvalidDataException("Nome deve ter pelo menos 3 caracteres");
+        }
+        
+        if (!lerTextoOpcional("Username", username)) {
+            cout << "Adicao cancelada.\n";
+            return;
+        }
+        
+        if (username.empty() || username.length() < 3) {
+            throw InvalidDataException("Username deve ter pelo menos 3 caracteres");
+        }
 
-    cout << "1 - Funcionario\n";
-    cout << "2 - Gestor\n";
-    int tipo{};
-    if (!lerInteiroOpcional("Tipo", tipo)) {
-        cout << "Adicao cancelada.\n";
-        return;
-    }
+        // Verificar se username já existe
+        for (const auto& func : controller.listarFuncionarios()) {
+            if (func->getUsername() == username) {
+                throw DuplicatedDataException("Username ja existe no sistema");
+            }
+        }
+        
+        if (!lerTextoOpcional("Password", password)) {
+            cout << "Adicao cancelada.\n";
+            return;
+        }
+        
+        if (password.empty() || password.length() < 4) {
+            throw InvalidDataException("Password deve ter pelo menos 4 caracteres");
+        }
 
-    if (tipo == 1) {
-        controller.adicionarFuncionario(nome, username, password);
-    } else if (tipo == 2) {
-        controller.adicionarGestor(nome, username, password);
-    } else {
-        cout << "Tipo invalido.\n";
-        return;
-    }
+        cout << "1 - Funcionario\n";
+        cout << "2 - Gestor\n";
+        int tipo{};
+        if (!lerInteiroOpcional("Tipo", tipo)) {
+            cout << "Adicao cancelada.\n";
+            return;
+        }
 
-    cout << "Utilizador criado com sucesso.\n";
+        if (tipo == 1) {
+            controller.adicionarFuncionario(nome, username, password);
+        } else if (tipo == 2) {
+            controller.adicionarGestor(nome, username, password);
+        } else {
+            throw InvalidDataException("Tipo de utilizador invalido");
+        }
+
+        cout << "Utilizador criado com sucesso.\n";
+    } catch (const InvalidDataException& erro) {
+        cout << "Erro ao adicionar funcionario - Dados invalidos: " << erro.what() << "\n";
+    } catch (const DuplicatedDataException& erro) {
+        cout << "Erro ao adicionar funcionario - Dados duplicados: " << erro.what() << "\n";
+    } catch (const exception& erro) {
+        cout << "Erro ao adicionar funcionario: " << erro.what() << "\n";
+    }
 }
 
 void mostrarRelatorio(Controller& controller) {
-    RelatorioResumo resumo = controller.gerarRelatorioResumo();
-    cout << "\nRelatorio resumo\n";
-    cout << "Produtos registados: " << resumo.totalProdutos << "\n";
-    cout << "Vendas registadas: " << resumo.totalVendas << "\n";
-    cout << "Itens vendidos: " << resumo.totalItensVendidos << "\n";
-    cout << "Total faturado: " << fixed << setprecision(2) << resumo.totalFaturado << " EUR\n";
+    try {
+        RelatorioResumo resumo = controller.gerarRelatorioResumo();
+        cout << "\nRelatorio resumo\n";
+        cout << "Produtos registados: " << resumo.totalProdutos << "\n";
+        cout << "Vendas registadas: " << resumo.totalVendas << "\n";
+        cout << "Itens vendidos: " << resumo.totalItensVendidos << "\n";
+        cout << "Total faturado: " << fixed << setprecision(2) << resumo.totalFaturado << " EUR\n";
+    } catch (const exception& erro) {
+        cout << "Erro ao gerar relatorio: " << erro.what() << "\n";
+    }
 }
 
 void gerirRelatorios(Controller& controller) {
-    cout << "1 - Relatorio resumo\n";
-    int opcao{};
-    if (!lerInteiroOpcional("Opcao", opcao)) {
-        cout << "Operacao cancelada.\n";
-        return;
-    }
+    try {
+        cout << "1 - Relatorio resumo\n";
+        int opcao{};
+        if (!lerInteiroOpcional("Opcao", opcao)) {
+            cout << "Operacao cancelada.\n";
+            return;
+        }
 
-    if (opcao == 1) {
-        mostrarRelatorio(controller);
-    } else {
-        cout << "Opcao invalida.\n";
+        if (opcao == 1) {
+            mostrarRelatorio(controller);
+        } else {
+            throw InvalidDataException("Opcao invalida");
+        }
+    } catch (const InvalidDataException& erro) {
+        cout << "Erro na gestao de relatorios - Dados invalidos: " << erro.what() << "\n";
+    } catch (const exception& erro) {
+        cout << "Erro na gestao de relatorios: " << erro.what() << "\n";
     }
 }
 
@@ -465,79 +552,92 @@ void mostrarMenu(const Controller& controller, const string& nomeFarmacia) {
 }
 
 int main() {
-    RepositorioFarmaciaMemoria repositorio;
-    Controller controller(&repositorio);
-    MockData::carregarDadosIniciais(controller);
-    repositorio.carregarStockGuardado(FICHEIRO_STOCK);
+    try {
+        RepositorioFarmaciaMemoria repositorio;
+        Controller controller(&repositorio);
+        MockData::carregarDadosIniciais(controller);
+        repositorio.carregarStockGuardado(FICHEIRO_STOCK);
 
-    cout << "Sistema de Gestao de Farmacia\n";
-    string nomeFarmacia = lerTexto("Nome da farmacia: ");
-    if (nomeFarmacia.empty()) {
-        nomeFarmacia = "Farmacia";
-    }
-
-    bool sair = false;
-    while (!sair) {
-        try {
-            if (controller.getUtilizadorAutenticado() == nullptr) {
-                iniciarSessao(controller);
-            }
-
-            mostrarMenu(controller, nomeFarmacia);
-            int opcao = lerInteiro("Opcao: ");
-
-            switch (opcao) {
-                case 1:
-                    listarProdutos(controller);
-                    break;
-                case 2:
-                    registarVenda(controller, repositorio);
-                    break;
-                case 3:
-                    listarReceitas(controller);
-                    break;
-                case 4:
-                    if (controller.utilizadorEhGestor()) {
-                        gerirStock(controller, repositorio);
-                    } else {
-                        cout << "Opcao invalida.\n";
-                    }
-                    break;
-                case 5:
-                    if (controller.utilizadorEhGestor()) {
-                        gerirFuncionarios(controller);
-                    } else {
-                        cout << "Opcao invalida.\n";
-                    }
-                    break;
-                case 9:
-                    if (controller.utilizadorEhGestor()) {
-                        gerirRelatorios(controller);
-                    } else {
-                        controller.terminarSessao();
-                        cout << "Sessao terminada.\n";
-                    }
-                    break;
-                case 10:
-                    if (controller.utilizadorEhGestor()) {
-                        controller.terminarSessao();
-                        cout << "Sessao terminada.\n";
-                    } else {
-                        cout << "Opcao invalida.\n";
-                    }
-                    break;
-                case 0:
-                    sair = true;
-                    break;
-                default:
-                    cout << "Opcao invalida.\n";
-                    break;
-            }
-        } catch (const exception& erro) {
-            cout << "Erro: " << erro.what() << "\n";
+        cout << "Sistema de Gestao de Farmacia\n";
+        string nomeFarmacia = lerTexto("Nome da farmacia: ");
+        if (nomeFarmacia.empty()) {
+            nomeFarmacia = "Farmacia";
         }
-    }
 
-    cout << "Programa terminado.\n";
-    return 0;
+        bool sair = false;
+        while (!sair) {
+            try {
+                if (controller.getUtilizadorAutenticado() == nullptr) {
+                    iniciarSessao(controller);
+                }
+
+                mostrarMenu(controller, nomeFarmacia);
+                int opcao = lerInteiro("Opcao: ");
+
+                switch (opcao) {
+                    case 1:
+                        listarProdutos(controller);
+                        break;
+                    case 2:
+                        registarVenda(controller, repositorio);
+                        break;
+                    case 3:
+                        listarReceitas(controller);
+                        break;
+                    case 4:
+                        if (controller.utilizadorEhGestor()) {
+                            gerirStock(controller, repositorio);
+                        } else {
+                            cout << "Opcao invalida.\n";
+                        }
+                        break;
+                    case 5:
+                        if (controller.utilizadorEhGestor()) {
+                            gerirFuncionarios(controller);
+                        } else {
+                            cout << "Opcao invalida.\n";
+                        }
+                        break;
+                    case 9:
+                        if (controller.utilizadorEhGestor()) {
+                            gerirRelatorios(controller);
+                        } else {
+                            controller.terminarSessao();
+                            cout << "Sessao terminada.\n";
+                        }
+                        break;
+                    case 10:
+                        if (controller.utilizadorEhGestor()) {
+                            controller.terminarSessao();
+                            cout << "Sessao terminada.\n";
+                        } else {
+                            cout << "Opcao invalida.\n";
+                        }
+                        break;
+                    case 0:
+                        sair = true;
+                        break;
+                    default:
+                        cout << "Opcao invalida.\n";
+                        break;
+                }
+            } catch (const InvalidDataException& erro) {
+                cout << "Erro - Dados invalidos: " << erro.what() << "\n";
+            } catch (const NoDataException& erro) {
+                cout << "Erro - Dados nao encontrados: " << erro.what() << "\n";
+            } catch (const DataConsistencyException& erro) {
+                cout << "Erro - Inconsistencia de dados: " << erro.what() << "\n";
+            } catch (const DuplicatedDataException& erro) {
+                cout << "Erro - Dados duplicados: " << erro.what() << "\n";
+            } catch (const exception& erro) {
+                cout << "Erro desconhecido: " << erro.what() << "\n";
+            }
+        }
+
+        cout << "Programa terminado.\n";
+        return 0;
+    } catch (const exception& erro) {
+        cout << "Erro critico ao iniciar programa: " << erro.what() << "\n";
+        return 1;
+    }
 }
