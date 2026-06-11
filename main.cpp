@@ -357,8 +357,7 @@ void adicionarProduto(Controller& controller) {
             cout << "Adicao cancelada.\n";
             return;
         }
-        controller.adicionarMedicamento(nome, "Medicamento", preco, stock, requerReceita == 1,
-                                        "", "", Data(1, 1, 2027));
+        controller.adicionarMedicamento(nome, "Medicamento", preco, stock, requerReceita == 1);
     } else {
         cout << "Tipo invalido.\n";
         return;

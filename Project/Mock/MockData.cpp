@@ -8,10 +8,8 @@ void MockData::inserirFuncionarios(Controller& controller) {
 void MockData::inserirProdutos(Controller& controller) {
     controller.adicionarProduto("Termometro", "Equipamento", 12.50, 10);
     controller.adicionarProduto("Mascara Cirurgica", "Protecao", 0.50, 200);
-    controller.adicionarMedicamento("Paracetamol", "Medicamento", 3.75, 40, false,
-                                    "500mg", "Farmalab", Data(1, 1, 2027));
-    controller.adicionarMedicamento("Antibiotico", "Medicamento", 8.00, 5, true,
-                                    "500mg", "Farmalab", Data(1, 1, 2027));
+    controller.adicionarMedicamento("Paracetamol", "Medicamento", 3.75, 40, false);
+    controller.adicionarMedicamento("Antibiotico", "Medicamento", 8.00, 5, true);
 }
 
 void MockData::carregarDadosIniciais(Controller& controller) {

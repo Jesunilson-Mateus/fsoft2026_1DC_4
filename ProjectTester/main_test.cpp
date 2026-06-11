@@ -11,8 +11,7 @@ int main() {
     Funcionario& funcionario = controller.adicionarFuncionario("Joao Silva", "joao", "abcd");
     Produto& produto = controller.adicionarProduto("Termometro", "Equipamento", 12.50, 10);
     Medicamento& medicamento = controller.adicionarMedicamento(
-        "Antibiotico", "Medicamento", 8.0, 5, true, "500mg",
-        "Farmalab", Data(1, 1, 2027));
+        "Antibiotico", "Medicamento", 8.0, 5, true);
 
     assert(controller.autenticar("joao", "abcd") == &funcionario);
     assert(controller.consultarStock(1) == 10);

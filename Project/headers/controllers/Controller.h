@@ -43,9 +43,7 @@ public:
                               const std::string& descricao = "");
     Medicamento& adicionarMedicamento(const std::string& nome, const std::string& categoria,
                                       double preco, int quantidadeStock,
-                                      bool requerReceita, const std::string& dosagem,
-                                      const std::string& fabricante,
-                                      const Data& dataValidade,
+                                      bool requerReceita,
                                       const std::string& descricao = "");
     Funcionario& adicionarFuncionario(const std::string& nome, const std::string& username,
                                       const std::string& password);

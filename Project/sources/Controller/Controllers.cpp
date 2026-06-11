@@ -85,14 +85,12 @@ Produto& Controller::adicionarProduto(const std::string& nome, const std::string
 
 Medicamento& Controller::adicionarMedicamento(const std::string& nome, const std::string& categoria,
                                               double preco, int quantidadeStock,
-                                              bool requerReceita, const std::string& dosagem,
-                                              const std::string& fabricante,
-                                              const Data& dataValidade,
+                                              bool requerReceita,
                                               const std::string& descricao) {
     auto& produtos = repositorio->getProdutos();
     produtos.push_back(std::unique_ptr<Produto>(
         new Medicamento(nome, categoria, preco, quantidadeStock, requerReceita,
-                        dosagem, fabricante, dataValidade, descricao)));
+                        descricao)));
     return static_cast<Medicamento&>(*produtos.back());
 }
 
