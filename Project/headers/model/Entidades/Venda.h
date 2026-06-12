@@ -1,6 +1,7 @@
 #ifndef PROJECT_HEADERS_MODEL_ENTIDADES_VENDA_H_
 #define PROJECT_HEADERS_MODEL_ENTIDADES_VENDA_H_
 
+#include "Cliente.h"
 #include "Data.h"
 #include "Funcionario.h"
 #include "Produto.h"
@@ -24,7 +25,7 @@ private:
     std::vector<ItemVenda> itens;
     double total{};
     Receita* receita{};
-    std::string nomePaciente;
+    Cliente* cliente{};
 
 public:
     Venda();
@@ -35,11 +36,12 @@ public:
     const std::vector<ItemVenda>& getItens() const;
     double getTotal() const;
     Receita* getReceita() const;
+    Cliente* getCliente() const;
     const std::string& getNomePaciente() const;
 
     void adicionarItem(Produto* produto, int quantidade);
     void definirReceita(Receita* receita);
-    void definirNomePaciente(const std::string& nomePaciente);
+    void definirCliente(Cliente* cliente);
     void calcularTotal();
     bool processarVenda();
 

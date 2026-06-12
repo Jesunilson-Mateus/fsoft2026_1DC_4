@@ -5,10 +5,13 @@ ItemVenda::ItemVenda(Produto* produto, int quantidade, double precoUnitario)
         : produto(produto), quantidade(quantidade), precoUnitario(precoUnitario),
           subtotal(quantidade * precoUnitario) {}
 
-Venda::Venda() : dataVenda(), funcionario(nullptr), total(0.0), receita(nullptr) {}
+Venda::Venda()
+        : dataVenda(), funcionario(nullptr), total(0.0), receita(nullptr),
+          cliente(nullptr) {}
 
 Venda::Venda(const Data& dataVenda, Funcionario* funcionario)
-        : dataVenda(dataVenda), funcionario(funcionario), total(0.0), receita(nullptr) {
+        : dataVenda(dataVenda), funcionario(funcionario), total(0.0), receita(nullptr),
+          cliente(nullptr) {
     if (funcionario == nullptr) {
         throw std::invalid_argument("Funcionario nao pode ser nulo.");
     }
@@ -34,8 +37,13 @@ Receita* Venda::getReceita() const {
     return receita;
 }
 
+Cliente* Venda::getCliente() const {
+    return cliente;
+}
+
 const std::string& Venda::getNomePaciente() const {
-    return nomePaciente;
+    static const std::string vazio = "";
+    return cliente != nullptr ? cliente->getNome() : vazio;
 }
 
 void Venda::adicionarItem(Produto* produto, int quantidade) {
@@ -53,8 +61,11 @@ void Venda::definirReceita(Receita* receita) {
     this->receita = receita;
 }
 
-void Venda::definirNomePaciente(const std::string& nomePaciente) {
-    this->nomePaciente = nomePaciente;
+void Venda::definirCliente(Cliente* cliente) {
+    if (cliente == nullptr) {
+        throw std::invalid_argument("Cliente nao pode ser nulo.");
+    }
+    this->cliente = cliente;
 }
 
 void Venda::calcularTotal() {

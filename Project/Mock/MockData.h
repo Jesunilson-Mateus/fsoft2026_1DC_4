@@ -5,6 +5,7 @@
 
 class MockData {
 private:
+    static void inserirClientes(Controller& controller);
     static void inserirFuncionarios(Controller& controller);
     static void inserirProdutos(Controller& controller);
 

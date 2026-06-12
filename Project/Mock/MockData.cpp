@@ -1,5 +1,9 @@
 #include "MockData.h"
 
+void MockData::inserirClientes(Controller& controller) {
+    controller.adicionarCliente("Ana Paciente");
+}
+
 void MockData::inserirFuncionarios(Controller& controller) {
     controller.adicionarGestor("Maria Gestora", "gestora", "1234");
     controller.adicionarFuncionario("Joao Silva", "joao", "abcd");
@@ -13,6 +17,7 @@ void MockData::inserirProdutos(Controller& controller) {
 }
 
 void MockData::carregarDadosIniciais(Controller& controller) {
+    inserirClientes(controller);
     inserirFuncionarios(controller);
     inserirProdutos(controller);
 }

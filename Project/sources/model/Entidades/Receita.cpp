@@ -6,14 +6,14 @@ bool Receita::ehNomeValido(const std::string& nome) {
 }
 
 Receita::Receita()
-        : nomePaciente(""), medicamento(""), codigoReceita(0), medico(""),
+        : cliente(nullptr), medicamento(""), codigoReceita(0), medico(""),
           utilizada(false) {}
 
-Receita::Receita(const std::string& nomePaciente, const std::string& medicamento,
+Receita::Receita(Cliente* cliente, const std::string& medicamento,
                  int codigoReceita, const std::string& medico)
-        : utilizada(false) {
-    if (!ehNomeValido(nomePaciente)) {
-        throw std::invalid_argument("Nome do paciente deve ter pelo menos 3 caracteres.");
+        : cliente(cliente), utilizada(false) {
+    if (cliente == nullptr || !ehNomeValido(cliente->getNome())) {
+        throw std::invalid_argument("Cliente da receita deve ser valido.");
     }
     if (medicamento.empty()) {
         throw std::invalid_argument("Medicamento nao pode estar vazio.");
@@ -25,14 +25,18 @@ Receita::Receita(const std::string& nomePaciente, const std::string& medicamento
         throw std::invalid_argument("Codigo da receita deve ter 5 digitos.");
     }
 
-    this->nomePaciente = nomePaciente;
     this->medicamento = medicamento;
     this->codigoReceita = codigoReceita;
     this->medico = medico;
 }
 
+Cliente* Receita::getCliente() const {
+    return cliente;
+}
+
 const std::string& Receita::getNomePaciente() const {
-    return nomePaciente;
+    static const std::string vazio = "";
+    return cliente != nullptr ? cliente->getNome() : vazio;
 }
 
 const std::string& Receita::getMedicamento() const {

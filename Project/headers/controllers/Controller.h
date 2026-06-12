@@ -24,6 +24,8 @@ private:
     IRepositorioFarmacia* repositorio{};
     Funcionario* utilizadorAutenticado{};
 
+    Cliente* procurarClientePorNomeInterna(const std::string& nome) const;
+    Cliente& obterOuCriarClienteInterno(const std::string& nome);
     Produto* obterProdutoPorPosicaoInterna(int posicao) const;
     Receita* procurarReceitaPorCodigoInterna(int codigo) const;
     int gerarCodigoReceitaInterno() const;
@@ -49,7 +51,11 @@ public:
                                       const std::string& password);
     Gestor& adicionarGestor(const std::string& nome, const std::string& username,
                             const std::string& password);
-    Receita& adicionarReceita(const std::string& nomePaciente,
+    void removerFuncionario(int posicaoFuncionario);
+    Cliente& adicionarCliente(const std::string& nome,
+                              const std::string& nif = "",
+                              const std::string& telefone = "");
+    Receita& adicionarReceita(const std::string& nomeCliente,
                               const std::string& medicamento,
                               int codigoReceita,
                               const std::string& medico);
@@ -57,6 +63,7 @@ public:
     Produto* obterProdutoPorPosicao(int posicao) const;
 
     const std::vector<std::unique_ptr<Produto>>& listarProdutos() const;
+    const std::vector<std::unique_ptr<Cliente>>& listarClientes() const;
     const std::vector<std::unique_ptr<Funcionario>>& listarFuncionarios() const;
     const std::vector<std::unique_ptr<Receita>>& listarReceitas() const;
     const std::vector<std::unique_ptr<Venda>>& listarVendas() const;
@@ -64,10 +71,12 @@ public:
     int consultarStock(int posicaoProduto) const;
     void adicionarStock(int posicaoProduto, int quantidade);
     void removerStock(int posicaoProduto, int quantidade);
+    void carregarStockGuardado(const std::string& ficheiroStock);
+    void guardarStockAtual(const std::string& ficheiroStock) const;
 
     Venda& registarVenda(const std::vector<std::pair<int, int>>& itens,
                          const Data& dataVenda,
-                         const std::string& nomePaciente,
+                         const std::string& nomeCliente,
                          bool receitaValidada = false);
 
     RelatorioResumo gerarRelatorioResumo() const;

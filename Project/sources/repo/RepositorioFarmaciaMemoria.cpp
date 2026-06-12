@@ -1,5 +1,10 @@
 #include "../../headers/repo/RepositorioFarmaciaMemoria.h"
 #include <fstream>
+#include <stdexcept>
+
+std::vector<std::unique_ptr<Cliente>>& RepositorioFarmaciaMemoria::getClientes() {
+    return clientes;
+}
 
 std::vector<std::unique_ptr<Produto>>& RepositorioFarmaciaMemoria::getProdutos() {
     return produtos;
@@ -15,6 +20,22 @@ std::vector<std::unique_ptr<Receita>>& RepositorioFarmaciaMemoria::getReceitas()
 
 std::vector<std::unique_ptr<Venda>>& RepositorioFarmaciaMemoria::getVendas() {
     return vendas;
+}
+
+Funcionario& RepositorioFarmaciaMemoria::guardarFuncionario(
+        std::unique_ptr<Funcionario> funcionario) {
+    if (funcionario == nullptr) {
+        throw std::invalid_argument("Funcionario nao pode ser nulo.");
+    }
+    funcionarios.push_back(std::move(funcionario));
+    return *funcionarios.back();
+}
+
+void RepositorioFarmaciaMemoria::removerFuncionarioPorPosicao(int posicaoFuncionario) {
+    if (posicaoFuncionario < 1 || posicaoFuncionario > static_cast<int>(funcionarios.size())) {
+        throw std::invalid_argument("Funcionario nao encontrado.");
+    }
+    funcionarios.erase(funcionarios.begin() + (posicaoFuncionario - 1));
 }
 
 void RepositorioFarmaciaMemoria::carregarStockGuardado(const std::string& caminhoFicheiro) {

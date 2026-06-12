@@ -1,11 +1,12 @@
 #ifndef PROJECT_HEADERS_MODEL_ENTIDADES_RECEITA_H_
 #define PROJECT_HEADERS_MODEL_ENTIDADES_RECEITA_H_
 
+#include "Cliente.h"
 #include <string>
 
 class Receita {
 private:
-    std::string nomePaciente;
+    Cliente* cliente{};
     std::string medicamento;
     int codigoReceita{};
     std::string medico;
@@ -15,9 +16,10 @@ private:
 
 public:
     Receita();
-    Receita(const std::string& nomePaciente, const std::string& medicamento,
+    Receita(Cliente* cliente, const std::string& medicamento,
             int codigoReceita, const std::string& medico);
 
+    Cliente* getCliente() const;
     const std::string& getNomePaciente() const;
     const std::string& getMedicamento() const;
     int getCodigoReceita() const;

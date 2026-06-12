@@ -7,6 +7,24 @@ Controller::Controller(IRepositorioFarmacia* repositorio) : repositorio(reposito
     }
 }
 
+Cliente* Controller::procurarClientePorNomeInterna(const std::string& nome) const {
+    auto& clientes = repositorio->getClientes();
+    for (const auto& cliente : clientes) {
+        if (cliente->getNome() == nome) {
+            return cliente.get();
+        }
+    }
+    return nullptr;
+}
+
+Cliente& Controller::obterOuCriarClienteInterno(const std::string& nome) {
+    Cliente* cliente = procurarClientePorNomeInterna(nome);
+    if (cliente != nullptr) {
+        return *cliente;
+    }
+    return adicionarCliente(nome);
+}
+
 Produto* Controller::obterProdutoPorPosicaoInterna(int posicao) const {
     auto& produtos = repositorio->getProdutos();
     if (posicao < 1 || posicao > static_cast<int>(produtos.size())) {
@@ -97,28 +115,54 @@ Medicamento& Controller::adicionarMedicamento(const std::string& nome, const std
 Funcionario& Controller::adicionarFuncionario(const std::string& nome,
                                               const std::string& username,
                                               const std::string& password) {
-    auto& funcionarios = repositorio->getFuncionarios();
-    funcionarios.push_back(std::unique_ptr<Funcionario>(
+    return repositorio->guardarFuncionario(std::unique_ptr<Funcionario>(
         new Funcionario(nome, username, password, "Funcionario")));
-    return *funcionarios.back();
 }
 
 Gestor& Controller::adicionarGestor(const std::string& nome,
                                     const std::string& username,
                                     const std::string& password) {
-    auto& funcionarios = repositorio->getFuncionarios();
-    funcionarios.push_back(std::unique_ptr<Funcionario>(
-        new Gestor(nome, username, password)));
-    return static_cast<Gestor&>(*funcionarios.back());
+    Funcionario& funcionario = repositorio->guardarFuncionario(
+        std::unique_ptr<Funcionario>(new Gestor(nome, username, password)));
+    return static_cast<Gestor&>(funcionario);
 }
 
-Receita& Controller::adicionarReceita(const std::string& nomePaciente,
+void Controller::removerFuncionario(int posicaoFuncionario) {
+    exigirGestor();
+
+    auto& funcionarios = repositorio->getFuncionarios();
+    if (posicaoFuncionario < 1 || posicaoFuncionario > static_cast<int>(funcionarios.size())) {
+        throw std::invalid_argument("Funcionario nao encontrado.");
+    }
+
+    if (funcionarios[static_cast<size_t>(posicaoFuncionario - 1)].get() == utilizadorAutenticado) {
+        throw std::runtime_error("Gestor autenticado nao pode ser removido durante a sessao.");
+    }
+
+    repositorio->removerFuncionarioPorPosicao(posicaoFuncionario);
+}
+
+Cliente& Controller::adicionarCliente(const std::string& nome,
+                                      const std::string& nif,
+                                      const std::string& telefone) {
+    Cliente* clienteExistente = procurarClientePorNomeInterna(nome);
+    if (clienteExistente != nullptr) {
+        return *clienteExistente;
+    }
+
+    auto& clientes = repositorio->getClientes();
+    clientes.push_back(std::unique_ptr<Cliente>(new Cliente(nome, nif, telefone)));
+    return *clientes.back();
+}
+
+Receita& Controller::adicionarReceita(const std::string& nomeCliente,
                                       const std::string& medicamento,
                                       int codigoReceita,
                                       const std::string& medico) {
+    Cliente& cliente = obterOuCriarClienteInterno(nomeCliente);
     auto& receitas = repositorio->getReceitas();
     receitas.push_back(std::unique_ptr<Receita>(
-        new Receita(nomePaciente, medicamento, codigoReceita, medico)));
+        new Receita(&cliente, medicamento, codigoReceita, medico)));
     return *receitas.back();
 }
 
@@ -128,6 +172,10 @@ Produto* Controller::obterProdutoPorPosicao(int posicao) const {
 
 const std::vector<std::unique_ptr<Produto>>& Controller::listarProdutos() const {
     return repositorio->getProdutos();
+}
+
+const std::vector<std::unique_ptr<Cliente>>& Controller::listarClientes() const {
+    return repositorio->getClientes();
 }
 
 const std::vector<std::unique_ptr<Funcionario>>& Controller::listarFuncionarios() const {
@@ -169,20 +217,26 @@ void Controller::removerStock(int posicaoProduto, int quantidade) {
     produto->removerStock(quantidade);
 }
 
+void Controller::carregarStockGuardado(const std::string& ficheiroStock) {
+    repositorio->carregarStockGuardado(ficheiroStock);
+}
+
+void Controller::guardarStockAtual(const std::string& ficheiroStock) const {
+    repositorio->guardarStock(ficheiroStock);
+}
+
 Venda& Controller::registarVenda(const std::vector<std::pair<int, int>>& itens,
                                  const Data& dataVenda,
-                                 const std::string& nomePaciente,
+                                 const std::string& nomeCliente,
                                  bool receitaValidada) {
     exigirAutenticacao();
     if (itens.empty()) {
         throw std::invalid_argument("Venda deve conter pelo menos um item.");
     }
-    if (nomePaciente.length() < 3) {
-        throw std::invalid_argument("Nome do paciente deve ter pelo menos 3 caracteres.");
-    }
+    Cliente& cliente = obterOuCriarClienteInterno(nomeCliente);
 
     std::unique_ptr<Venda> venda(new Venda(dataVenda, utilizadorAutenticado));
-    venda->definirNomePaciente(nomePaciente);
+    venda->definirCliente(&cliente);
     Receita* receita = nullptr;
     bool receitaFoiNecessaria = false;
     std::string medicamentoDaReceita;
@@ -208,7 +262,7 @@ Venda& Controller::registarVenda(const std::vector<std::pair<int, int>>& itens,
     }
 
     if (receitaFoiNecessaria) {
-        receita = &adicionarReceita(nomePaciente, medicamentoDaReceita,
+        receita = &adicionarReceita(cliente.getNome(), medicamentoDaReceita,
                                     gerarCodigoReceitaInterno(),
                                     "Receita validada na venda");
         venda->definirReceita(receita);

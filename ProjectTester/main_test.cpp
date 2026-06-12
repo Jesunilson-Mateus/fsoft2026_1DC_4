@@ -30,18 +30,36 @@ int main() {
         "Ana Paciente",
         true);
     assert(vendaFuncionario.getTotal() == 33.0);
+    assert(vendaFuncionario.getCliente() != nullptr);
     assert(vendaFuncionario.getNomePaciente() == "Ana Paciente");
     assert(vendaFuncionario.getReceita() != nullptr);
+    assert(vendaFuncionario.getReceita()->getCliente() == vendaFuncionario.getCliente());
     assert(vendaFuncionario.getReceita()->getMedicamento() == medicamento.getNome());
     assert(controller.consultarStock(1) == 8);
     assert(controller.consultarStock(2) == 4);
     assert(controller.listarReceitas().size() == 1);
+    assert(controller.listarClientes().size() == 1);
     assert(controller.listarReceitas().front()->foiUtilizada());
 
     controller.autenticar("gestora", "1234");
     assert(controller.getUtilizadorAutenticado() == &gestor);
     controller.adicionarStock(1, 5);
     assert(controller.consultarStock(1) == 13);
+
+    controller.adicionarFuncionario("Carlos Temporario", "carlos", "temp");
+    assert(controller.listarFuncionarios().size() == 3);
+    controller.removerFuncionario(3);
+    assert(controller.listarFuncionarios().size() == 2);
+    assert(controller.autenticar("carlos", "temp") == nullptr);
+
+    controller.autenticar("gestora", "1234");
+    bool bloqueouRemoverGestorAutenticado = false;
+    try {
+        controller.removerFuncionario(1);
+    } catch (const std::runtime_error&) {
+        bloqueouRemoverGestorAutenticado = true;
+    }
+    assert(bloqueouRemoverGestorAutenticado);
 
     RelatorioResumo resumo = controller.gerarRelatorioResumo();
     assert(resumo.totalProdutos == 2);
