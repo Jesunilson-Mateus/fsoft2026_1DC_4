@@ -5,24 +5,11 @@
 #include "../../headers/model/Entidades/Medicamento.h"
 #include "../../headers/views/ProdutoView.h"
 #include "../../headers/views/Utils.h"
+#include <cctype>
 #include <iomanip>
 #include <iostream>
 #include <map>
 #include <vector>
-
-void VendaView::listarReceitas(const Controller& controller) {
-    std::cout << "\nReceitas disponiveis\n";
-    std::cout << std::left << std::setw(22) << "Paciente" << std::setw(22)
-              << "Medicamento" << std::setw(18) << "Codigo da receita" << "Estado\n";
-
-    for (const auto& receita : controller.listarReceitas()) {
-        std::cout << std::left << std::setw(22) << receita->getNomePaciente()
-                  << std::setw(22) << receita->getMedicamento()
-                  << std::setw(18) << receita->getCodigoReceita()
-                  << (receita->foiUtilizada() ? "Utilizada" : "Disponivel")
-                  << "\n";
-    }
-}
 
 void VendaView::registarVenda(Controller& controller, const std::string& ficheiroStock) {
     ProdutoView::listarProdutos(controller);
@@ -32,10 +19,27 @@ void VendaView::registarVenda(Controller& controller, const std::string& ficheir
     bool precisaReceita = false;
     bool receitaValidada = false;
     std::string nomeCliente;
+    std::string nifCliente;
 
     if (!Utils::lerTextoOpcional("Nome do cliente", nomeCliente)) {
         std::cout << "Venda cancelada.\n";
         return;
+    }
+    if (nomeCliente.empty() || nomeCliente.length() < 3) {
+        throw InvalidDataException("Nome do cliente deve ter pelo menos 3 caracteres");
+    }
+
+    if (!Utils::lerTextoOpcional("NIF do cliente", nifCliente)) {
+        std::cout << "Venda cancelada.\n";
+        return;
+    }
+    if (!nifCliente.empty() && nifCliente.length() != 9) {
+        throw InvalidDataException("NIF do cliente deve ter 9 digitos");
+    }
+    for (char digito : nifCliente) {
+        if (!std::isdigit(static_cast<unsigned char>(digito))) {
+            throw InvalidDataException("NIF do cliente deve conter apenas digitos");
+        }
     }
 
     while (true) {
@@ -83,7 +87,7 @@ void VendaView::registarVenda(Controller& controller, const std::string& ficheir
         throw InvalidDataException("Nenhum item foi selecionado para a venda");
     }
 
-    Venda& venda = controller.registarVenda(itens, Data(19, 5, 2026), nomeCliente,
+    Venda& venda = controller.registarVenda(itens, Data(19, 5, 2026), nomeCliente, nifCliente,
                                             receitaValidada);
     controller.guardarStockAtual(ficheiroStock);
 

@@ -33,12 +33,11 @@ void Views::mostrarMenu(const Controller& controller, const std::string& nomeFar
     std::cout << "\n=== Sistema de Gestao de Farmacia - " << nomeFarmacia << " ===\n";
     std::cout << "1 - Listar produtos/stock\n";
     std::cout << "2 - Registar venda\n";
-    std::cout << "3 - Listar receitas\n";
-    std::cout << "4 - Listar clientes\n";
+    std::cout << "3 - Listar clientes\n";
 
     if (controller.utilizadorEhGestor()) {
-        std::cout << "5 - Gerir stock\n";
-        std::cout << "6 - Gestao dos funcionarios\n";
+        std::cout << "4 - Gerir stock\n";
+        std::cout << "5 - Gerir funcionarios\n";
         std::cout << "9 - Gerir relatorios\n";
         std::cout << "10 - Terminar sessao\n";
     } else {
@@ -73,19 +72,16 @@ void Views::executar(Controller& controller, const std::string& ficheiroStock) {
                     VendaView::registarVenda(controller, ficheiroStock);
                     break;
                 case 3:
-                    VendaView::listarReceitas(controller);
-                    break;
-                case 4:
                     ClienteView::listarClientes(controller);
                     break;
-                case 5:
+                case 4:
                     if (controller.utilizadorEhGestor()) {
                         StockView::gerirStock(controller, ficheiroStock);
                     } else {
                         std::cout << "Opcao invalida.\n";
                     }
                     break;
-                case 6:
+                case 5:
                     if (controller.utilizadorEhGestor()) {
                         FuncionarioView::gerirFuncionarios(controller);
                     } else {

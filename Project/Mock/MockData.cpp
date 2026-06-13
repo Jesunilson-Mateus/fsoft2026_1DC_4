@@ -1,7 +1,7 @@
 #include "MockData.h"
 
 void MockData::inserirClientes(Controller& controller) {
-    controller.adicionarCliente("Ana Paciente");
+    controller.adicionarCliente("Ana Paciente", "123456789");
 }
 
 void MockData::inserirFuncionarios(Controller& controller) {

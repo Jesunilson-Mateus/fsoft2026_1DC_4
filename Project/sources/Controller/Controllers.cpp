@@ -1,4 +1,7 @@
 #include "../../headers/controllers/Controller.h"
+#include "../../headers/exceptions/DuplicatedDataException.h"
+#include "../../headers/exceptions/InvalidDataException.h"
+#include <cctype>
 #include <stdexcept>
 
 Controller::Controller(IRepositorioFarmacia* repositorio) : repositorio(repositorio) {
@@ -17,12 +20,39 @@ Cliente* Controller::procurarClientePorNomeInterna(const std::string& nome) cons
     return nullptr;
 }
 
-Cliente& Controller::obterOuCriarClienteInterno(const std::string& nome) {
-    Cliente* cliente = procurarClientePorNomeInterna(nome);
-    if (cliente != nullptr) {
-        return *cliente;
+Cliente* Controller::procurarClientePorNifInterna(const std::string& nif) const {
+    if (nif.empty()) {
+        return nullptr;
     }
-    return adicionarCliente(nome);
+
+    auto& clientes = repositorio->getClientes();
+    for (const auto& cliente : clientes) {
+        if (cliente->getNif() == nif) {
+            return cliente.get();
+        }
+    }
+    return nullptr;
+}
+
+Cliente& Controller::obterOuCriarClienteInterno(const std::string& nome, const std::string& nif) {
+    Cliente* clientePorNif = procurarClientePorNifInterna(nif);
+    if (clientePorNif != nullptr) {
+        if (clientePorNif->getNome() != nome) {
+            throw DuplicatedDataException("NIF ja associado a outro cliente");
+        }
+        return *clientePorNif;
+    }
+
+    Cliente* clientePorNome = procurarClientePorNomeInterna(nome);
+    if (clientePorNome != nullptr) {
+        if (!nif.empty() && clientePorNome->getNif().empty()) {
+            clientePorNome->setNif(nif);
+        } else if (!nif.empty() && clientePorNome->getNif() != nif) {
+            throw DuplicatedDataException("Cliente ja existe com outro NIF");
+        }
+        return *clientePorNome;
+    }
+    return adicionarCliente(nome, nif);
 }
 
 Produto* Controller::obterProdutoPorPosicaoInterna(int posicao) const {
@@ -145,8 +175,33 @@ void Controller::removerFuncionario(int posicaoFuncionario) {
 Cliente& Controller::adicionarCliente(const std::string& nome,
                                       const std::string& nif,
                                       const std::string& telefone) {
+    if (nome.empty() || nome.length() < 3) {
+        throw InvalidDataException("Nome do cliente deve ter pelo menos 3 caracteres");
+    }
+    if (!nif.empty() && nif.length() != 9) {
+        throw InvalidDataException("NIF do cliente deve ter 9 digitos");
+    }
+    for (char digito : nif) {
+        if (!std::isdigit(static_cast<unsigned char>(digito))) {
+            throw InvalidDataException("NIF do cliente deve conter apenas digitos");
+        }
+    }
+
+    Cliente* clienteComNif = procurarClientePorNifInterna(nif);
+    if (clienteComNif != nullptr) {
+        if (clienteComNif->getNome() != nome) {
+            throw DuplicatedDataException("NIF ja associado a outro cliente");
+        }
+        return *clienteComNif;
+    }
+
     Cliente* clienteExistente = procurarClientePorNomeInterna(nome);
     if (clienteExistente != nullptr) {
+        if (!nif.empty() && clienteExistente->getNif().empty()) {
+            clienteExistente->setNif(nif);
+        } else if (!nif.empty() && clienteExistente->getNif() != nif) {
+            throw DuplicatedDataException("Cliente ja existe com outro NIF");
+        }
         return *clienteExistente;
     }
 
@@ -228,12 +283,13 @@ void Controller::guardarStockAtual(const std::string& ficheiroStock) const {
 Venda& Controller::registarVenda(const std::vector<std::pair<int, int>>& itens,
                                  const Data& dataVenda,
                                  const std::string& nomeCliente,
+                                 const std::string& nifCliente,
                                  bool receitaValidada) {
     exigirAutenticacao();
     if (itens.empty()) {
         throw std::invalid_argument("Venda deve conter pelo menos um item.");
     }
-    Cliente& cliente = obterOuCriarClienteInterno(nomeCliente);
+    Cliente& cliente = obterOuCriarClienteInterno(nomeCliente, nifCliente);
 
     std::unique_ptr<Venda> venda(new Venda(dataVenda, utilizadorAutenticado));
     venda->definirCliente(&cliente);
@@ -276,6 +332,13 @@ Venda& Controller::registarVenda(const std::vector<std::pair<int, int>>& itens,
     auto& vendas = repositorio->getVendas();
     vendas.push_back(std::move(venda));
     return *vendas.back();
+}
+
+Venda& Controller::registarVenda(const std::vector<std::pair<int, int>>& itens,
+                                 const Data& dataVenda,
+                                 const std::string& nomeCliente,
+                                 bool receitaValidada) {
+    return registarVenda(itens, dataVenda, nomeCliente, "", receitaValidada);
 }
 
 RelatorioResumo Controller::gerarRelatorioResumo() const {

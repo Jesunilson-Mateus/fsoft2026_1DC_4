@@ -25,7 +25,8 @@ private:
     Funcionario* utilizadorAutenticado{};
 
     Cliente* procurarClientePorNomeInterna(const std::string& nome) const;
-    Cliente& obterOuCriarClienteInterno(const std::string& nome);
+    Cliente* procurarClientePorNifInterna(const std::string& nif) const;
+    Cliente& obterOuCriarClienteInterno(const std::string& nome, const std::string& nif = "");
     Produto* obterProdutoPorPosicaoInterna(int posicao) const;
     Receita* procurarReceitaPorCodigoInterna(int codigo) const;
     int gerarCodigoReceitaInterno() const;
@@ -77,7 +78,12 @@ public:
     Venda& registarVenda(const std::vector<std::pair<int, int>>& itens,
                          const Data& dataVenda,
                          const std::string& nomeCliente,
+                         const std::string& nifCliente = "",
                          bool receitaValidada = false);
+    Venda& registarVenda(const std::vector<std::pair<int, int>>& itens,
+                         const Data& dataVenda,
+                         const std::string& nomeCliente,
+                         bool receitaValidada);
 
     RelatorioResumo gerarRelatorioResumo() const;
 };

@@ -1,6 +1,7 @@
 #include "../Project/headers/controllers/Controller.h"
 #include "../Project/headers/repo/RepositorioFarmaciaMemoria.h"
 #include <cassert>
+#include <iostream>
 #include <stdexcept>
 
 int main() {
@@ -67,5 +68,6 @@ int main() {
     assert(resumo.totalItensVendidos == 3);
     assert(resumo.totalFaturado == 33.0);
 
+    std::cout << "Todos os testes passaram com sucesso.\n";
     return 0;
 }

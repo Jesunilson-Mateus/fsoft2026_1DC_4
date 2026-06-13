@@ -9,6 +9,9 @@ private:
     std::string nif;
     std::string telefone;
 
+    static bool ehNomeValido(const std::string& nome);
+    static bool ehNifValido(const std::string& nif);
+
 public:
     Cliente();
     explicit Cliente(const std::string& nome,
@@ -18,6 +21,8 @@ public:
     const std::string& getNome() const;
     const std::string& getNif() const;
     const std::string& getTelefone() const;
+
+    void setNif(const std::string& nif);
 
     bool operator==(const Cliente& outro) const;
 };
