@@ -1,0 +1,22 @@
+name: CMake Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -S . -B build
+
+      - name: Build project
+        run: cmake --build build --config Debug
+
+      - name: Run tests
+        run: ctest --test-dir build --build-config Debug --output-on-failure
