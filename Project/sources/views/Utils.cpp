@@ -3,6 +3,22 @@
 #include <limits>
 #include <sstream>
 
+namespace {
+template <typename T>
+bool lerNumeroOpcional(const std::string& mensagem, T& valor) {
+    std::string entrada;
+    while (true) {
+        std::cout << mensagem << " (v para voltar): ";
+        getline(std::cin, entrada);
+        if (Utils::pediuVoltar(entrada)) return false;
+
+        std::istringstream stream(entrada);
+        if (stream >> valor && stream.eof()) return true;
+        std::cout << "Valor invalido. Tente novamente.\n";
+    }
+}
+}
+
 void Utils::limparEntrada() {
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -26,39 +42,11 @@ bool Utils::pediuVoltar(const std::string& valor) {
 }
 
 bool Utils::lerInteiroOpcional(const std::string& mensagem, int& valor) {
-    std::string entrada;
-    while (true) {
-        std::cout << mensagem << " (v para voltar): ";
-        getline(std::cin, entrada);
-        if (pediuVoltar(entrada)) {
-            return false;
-        }
-
-        std::istringstream stream(entrada);
-        if (stream >> valor && stream.eof()) {
-            return true;
-        }
-
-        std::cout << "Valor invalido. Tente novamente.\n";
-    }
+    return lerNumeroOpcional(mensagem, valor);
 }
 
 bool Utils::lerDoubleOpcional(const std::string& mensagem, double& valor) {
-    std::string entrada;
-    while (true) {
-        std::cout << mensagem << " (v para voltar): ";
-        getline(std::cin, entrada);
-        if (pediuVoltar(entrada)) {
-            return false;
-        }
-
-        std::istringstream stream(entrada);
-        if (stream >> valor && stream.eof()) {
-            return true;
-        }
-
-        std::cout << "Valor invalido. Tente novamente.\n";
-    }
+    return lerNumeroOpcional(mensagem, valor);
 }
 
 std::string Utils::lerTexto(const std::string& mensagem) {
