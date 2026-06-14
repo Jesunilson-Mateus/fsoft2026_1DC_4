@@ -1,8 +1,6 @@
 #include "TestUtils.h"
 
-namespace {
-
-void relatorio_resume_vendas() {
+TEST(RelatorioTest, ResumeVendas) {
     AmbienteController ambiente;
     ambiente.controller.adicionarGestor("Maria Gestora", "gestora", "1234");
     ambiente.controller.adicionarFuncionario("Joao Silva", "joao", "abcd");
@@ -15,16 +13,8 @@ void relatorio_resume_vendas() {
     ambiente.controller.autenticar("gestora", "1234");
     RelatorioResumo resumo = ambiente.controller.gerarRelatorioResumo();
 
-    confirmar(resumo.totalProdutos == 2, "Relatorio deve contar produtos.");
-    confirmar(resumo.totalVendas == 1, "Relatorio deve contar vendas.");
-    confirmar(resumo.totalItensVendidos == 6, "Relatorio deve somar itens vendidos.");
-    confirmarIgual(30.0, resumo.totalFaturado, "Relatorio deve somar faturacao.");
-}
-
-} // namespace
-
-std::vector<TestCase> obterTestesRelatorio() {
-    return {
-        {"Relatorio: resume vendas", relatorio_resume_vendas},
-    };
+    EXPECT_EQ(2, resumo.totalProdutos);
+    EXPECT_EQ(1, resumo.totalVendas);
+    EXPECT_EQ(6, resumo.totalItensVendidos);
+    EXPECT_DOUBLE_EQ(30.0, resumo.totalFaturado);
 }

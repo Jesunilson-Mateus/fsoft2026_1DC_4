@@ -9,6 +9,7 @@ set(PROJECT_HEADERS
     headers/repo/RepositorioFarmaciaMemoria.h
     headers/model/Entidades/Cliente.h
     headers/model/Entidades/Data.h
+    headers/model/Entidades/Farmacia.h
     headers/model/Entidades/Funcionario.h
     headers/model/Entidades/Gestor.h
     headers/model/Entidades/Medicamento.h
@@ -35,6 +36,7 @@ set(PROJECT_SOURCES
     sources/repo/RepositorioFarmaciaMemoria.cpp
     sources/model/Entidades/Cliente.cpp
     sources/model/Entidades/Data.cpp
+    sources/model/Entidades/Farmacia.cpp
     sources/model/Entidades/Funcionario.cpp
     sources/model/Entidades/Gestor.cpp
     sources/model/Entidades/Medicamento.cpp

@@ -2,17 +2,19 @@
 #define FSOFT2026_1DC_4_REPOSITORIOFARMACIAMEMORIA_H
 
 #include "IRepositorioFarmacia.h"
+#include "../model/Entidades/Farmacia.h"
 #include <string>
 
 class RepositorioFarmaciaMemoria : public IRepositorioFarmacia {
 private:
-    std::vector<std::unique_ptr<Cliente>> clientes;
-    std::vector<std::unique_ptr<Produto>> produtos;
-    std::vector<std::unique_ptr<Funcionario>> funcionarios;
-    std::vector<std::unique_ptr<Receita>> receitas;
-    std::vector<std::unique_ptr<Venda>> vendas;
+    Farmacia farmacia;
 
 public:
+    explicit RepositorioFarmaciaMemoria(const std::string& nomeFarmacia = "Farmacia");
+
+    Farmacia& getFarmacia();
+    const Farmacia& getFarmacia() const;
+
     std::vector<std::unique_ptr<Cliente>>& getClientes() override;
     std::vector<std::unique_ptr<Produto>>& getProdutos() override;
     std::vector<std::unique_ptr<Funcionario>>& getFuncionarios() override;

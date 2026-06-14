@@ -1,26 +1,12 @@
 #include "TestUtils.h"
 
-namespace {
-
-void funcionario_autenticacao() {
+TEST(FuncionarioTest, Autenticacao) {
     Funcionario funcionario("Joao Silva", "joao", "abcd", "Funcionario");
 
-    confirmar(funcionario.autenticar("joao", "abcd"), "Credenciais certas devem autenticar.");
-    confirmar(!funcionario.autenticar("joao", "errada"), "Password errada nao deve autenticar.");
-    confirmar(funcionario == "joao", "Operador de igualdade deve comparar username.");
+    EXPECT_TRUE(funcionario.autenticar("joao", "abcd"));
+    EXPECT_FALSE(funcionario.autenticar("joao", "errada"));
+    EXPECT_TRUE(funcionario == "joao");
 
-    confirmarExcecao<std::invalid_argument>(
-        []() { Funcionario invalido("Jo", "joao", "abcd", "Funcionario"); },
-        "Funcionario com nome curto deve ser rejeitado.");
-    confirmarExcecao<std::invalid_argument>(
-        []() { Funcionario invalido("Joao Silva", "js", "abcd", "Funcionario"); },
-        "Funcionario com username curto deve ser rejeitado.");
-}
-
-} // namespace
-
-std::vector<TestCase> obterTestesFuncionario() {
-    return {
-        {"Funcionario: autenticacao", funcionario_autenticacao},
-    };
+    EXPECT_THROW(Funcionario invalido("Jo", "joao", "abcd", "Funcionario"), std::invalid_argument);
+    EXPECT_THROW(Funcionario invalido("Joao Silva", "js", "abcd", "Funcionario"), std::invalid_argument);
 }

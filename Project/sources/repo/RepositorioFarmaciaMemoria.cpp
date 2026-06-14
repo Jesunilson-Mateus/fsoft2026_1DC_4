@@ -2,40 +2,44 @@
 #include <fstream>
 #include <stdexcept>
 
+RepositorioFarmaciaMemoria::RepositorioFarmaciaMemoria(const std::string& nomeFarmacia)
+        : farmacia(nomeFarmacia) {}
+
+Farmacia& RepositorioFarmaciaMemoria::getFarmacia() {
+    return farmacia;
+}
+
+const Farmacia& RepositorioFarmaciaMemoria::getFarmacia() const {
+    return farmacia;
+}
+
 std::vector<std::unique_ptr<Cliente>>& RepositorioFarmaciaMemoria::getClientes() {
-    return clientes;
+    return farmacia.getClientes();
 }
 
 std::vector<std::unique_ptr<Produto>>& RepositorioFarmaciaMemoria::getProdutos() {
-    return produtos;
+    return farmacia.getProdutos();
 }
 
 std::vector<std::unique_ptr<Funcionario>>& RepositorioFarmaciaMemoria::getFuncionarios() {
-    return funcionarios;
+    return farmacia.getFuncionarios();
 }
 
 std::vector<std::unique_ptr<Receita>>& RepositorioFarmaciaMemoria::getReceitas() {
-    return receitas;
+    return farmacia.getReceitas();
 }
 
 std::vector<std::unique_ptr<Venda>>& RepositorioFarmaciaMemoria::getVendas() {
-    return vendas;
+    return farmacia.getVendas();
 }
 
 Funcionario& RepositorioFarmaciaMemoria::guardarFuncionario(
         std::unique_ptr<Funcionario> funcionario) {
-    if (funcionario == nullptr) {
-        throw std::invalid_argument("Funcionario nao pode ser nulo.");
-    }
-    funcionarios.push_back(std::move(funcionario));
-    return *funcionarios.back();
+    return farmacia.guardarFuncionario(std::move(funcionario));
 }
 
 void RepositorioFarmaciaMemoria::removerFuncionarioPorPosicao(int posicaoFuncionario) {
-    if (posicaoFuncionario < 1 || posicaoFuncionario > static_cast<int>(funcionarios.size())) {
-        throw std::invalid_argument("Funcionario nao encontrado.");
-    }
-    funcionarios.erase(funcionarios.begin() + (posicaoFuncionario - 1));
+    farmacia.removerFuncionarioPorPosicao(posicaoFuncionario);
 }
 
 void RepositorioFarmaciaMemoria::carregarStockGuardado(const std::string& caminhoFicheiro) {
@@ -46,6 +50,7 @@ void RepositorioFarmaciaMemoria::carregarStockGuardado(const std::string& caminh
 
     int posicao{};
     int quantidadeGuardada{};
+    auto& produtos = farmacia.getProdutos();
     while (ficheiro >> posicao >> quantidadeGuardada) {
         if (posicao >= 1 && posicao <= static_cast<int>(produtos.size()) && quantidadeGuardada >= 0) {
             Produto* produto = produtos[posicao - 1].get();
@@ -61,6 +66,7 @@ void RepositorioFarmaciaMemoria::guardarStock(const std::string& caminhoFicheiro
     }
 
     int posicao = 1;
+    const auto& produtos = farmacia.getProdutos();
     for (const auto& produto : produtos) {
         ficheiro << posicao++ << " " << produto->getQuantidadeStock() << "\n";
     }
